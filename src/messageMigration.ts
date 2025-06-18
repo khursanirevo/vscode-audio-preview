@@ -39,13 +39,16 @@ export function migrateWebviewMessage(oldMsg: OldMsg.WebviewMessage): NewMsg.Web
     return { type: 'WV_CONFIG' };
   }
   if (OldMsg.WebviewMessageType.isDATA(oldMsg)) {
-    return { type: 'WV_DATA', payload: oldMsg.data };
+    const dataMsg = oldMsg as OldMsg.WebviewDataMessage;
+    return { type: 'WV_DATA', payload: dataMsg.data };
   }
   if (OldMsg.WebviewMessageType.isWriteWav(oldMsg)) {
-    return { type: 'WV_WRITE_WAV', payload: oldMsg.data };
+    const writeMsg = oldMsg as OldMsg.WebviewWriteWavMessage;
+    return { type: 'WV_WRITE_WAV', payload: writeMsg.data };
   }
   if (OldMsg.WebviewMessageType.isERROR(oldMsg)) {
-    return { type: 'WV_ERROR', payload: oldMsg.data };
+    const errorMsg = oldMsg as OldMsg.WebviewErrorMessage;
+    return { type: 'WV_ERROR', payload: errorMsg.data };
   }
   throw new Error(`Unknown WebviewMessage type: ${(oldMsg as any).type}`);
 }

@@ -32,7 +32,7 @@ export interface WebviewWriteWavPayload {
 }
 
 export interface WebviewErrorPayload {
-  msg: string;
+  message: string;
 }
 
 // Type guards for Extension messages
