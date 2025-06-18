@@ -4,6 +4,8 @@ import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
 import { PlayerProvider } from '../contexts/PlayerContext';
 import { InfoTable, AudioInfo } from './InfoTable';
 import { Player } from './Player';
+import { SettingTab } from './SettingTab';
+import { Analyzer } from './Analyzer';
 import { Config } from '../../config';
 
 interface WebViewInnerProps {
@@ -41,13 +43,11 @@ export function WebViewInner({ config, audioContext, audioBuffer, audioInfo }: W
       </div>
       
       <div id="settingTab">
-        {/* TODO: Implement settings component */}
-        <div>Settings (TODO)</div>
+        <SettingTab />
       </div>
       
       <div id="analyzer">
-        {/* TODO: Implement analyzer component */}
-        <div>Analyzer (TODO)</div>
+        <Analyzer autoAnalyze={config.autoAnalyze} />
       </div>
     </PlayerProvider>
   );

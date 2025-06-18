@@ -11,6 +11,8 @@ export class VSCodeDisposableAdapter implements IDisposable {
 }
 
 // Helper function to adapt vscode.Disposable to IDisposable
-export function toIDisposable(vscodeDisposable: vscode.Disposable): IDisposable {
+export function toIDisposable(
+  vscodeDisposable: vscode.Disposable,
+): IDisposable {
   return new VSCodeDisposableAdapter(vscodeDisposable);
 }

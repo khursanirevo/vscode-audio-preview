@@ -32,7 +32,7 @@ export async function waitVSCodeMessageForAction(
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       postMessageFromWebview({
-        type: 'WV_ERROR',
+        type: "WV_ERROR",
         payload: { message: "Timeout" },
       });
     }, timeout);
@@ -42,8 +42,11 @@ export async function waitVSCodeMessageForAction(
       (e: Event) => {
         const messageEvent = e as MessageEvent<ExtMessage | WebviewMessage>;
         clearTimeout(timer);
-        if (messageEvent.data.type === 'WV_ERROR') {
-          const errorMessage = messageEvent.data as Extract<WebviewMessage, { type: 'WV_ERROR' }>;
+        if (messageEvent.data.type === "WV_ERROR") {
+          const errorMessage = messageEvent.data as Extract<
+            WebviewMessage,
+            { type: "WV_ERROR" }
+          >;
           console.log(errorMessage.payload.message);
         }
         resolve(messageEvent.data);

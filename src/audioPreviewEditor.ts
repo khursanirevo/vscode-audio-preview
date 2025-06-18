@@ -115,7 +115,7 @@ export class AudioPreviewEditorProvider
         await document.reload();
         for (const webviewPanel of this.webviews.get(document.uri)) {
           this.postMessage(webviewPanel.webview, {
-            type: 'EXT_RELOAD',
+            type: "EXT_RELOAD",
           });
         }
       }),
@@ -157,11 +157,11 @@ export class AudioPreviewEditorProvider
     document: AudioPreviewDocument,
   ) {
     switch (msg.type) {
-      case 'WV_CONFIG': {
+      case "WV_CONFIG": {
         // read config
         const config = vscode.workspace.getConfiguration("WavPreview");
         this.postMessage(webviewPanel.webview, {
-          type: 'EXT_CONFIG',
+          type: "EXT_CONFIG",
           payload: {
             autoAnalyze: config.get("autoAnalyze"),
             playerDefault: config.get("playerDefault") as PlayerDefault,
@@ -171,7 +171,7 @@ export class AudioPreviewEditorProvider
         break;
       }
 
-      case 'WV_DATA':
+      case "WV_DATA":
         if (isWebviewDataMessage(msg)) {
           if (!vscode.workspace.isTrusted) {
             throw new Error("Cannot play audio in untrusted workspaces");
@@ -185,11 +185,12 @@ export class AudioPreviewEditorProvider
           Create a new Uint8Array with a copy of the slice to get a buffer of only the sliced range
           */
           const dd = document.documentData;
-          const samples = new Uint8Array(dd.slice(msg.payload.start, msg.payload.end))
-            .buffer;
+          const samples = new Uint8Array(
+            dd.slice(msg.payload.start, msg.payload.end),
+          ).buffer;
 
           this.postMessage(webviewPanel.webview, {
-            type: 'EXT_DATA',
+            type: "EXT_DATA",
             payload: {
               samples: samples,
               start: msg.payload.start,
@@ -200,7 +201,7 @@ export class AudioPreviewEditorProvider
         }
         break;
 
-      case 'WV_WRITE_WAV':
+      case "WV_WRITE_WAV":
         if (isWebviewWriteWavMessage(msg)) {
           const dir = vscode.workspace.getWorkspaceFolder(document.uri);
           const wavUri = vscode.Uri.joinPath(dir.uri, msg.payload.filename);
@@ -212,7 +213,7 @@ export class AudioPreviewEditorProvider
         }
         break;
 
-      case 'WV_ERROR':
+      case "WV_ERROR":
         if (isWebviewErrorMessage(msg)) {
           vscode.window.showErrorMessage(msg.payload.message);
         }
