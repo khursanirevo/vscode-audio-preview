@@ -17,8 +17,11 @@ The extension uses a custom editor provider to handle audio files and renders a 
 - Press F5 - Launch extension in Extension Development Host
 
 ### Testing
-- `npm run test` - Run Jest tests
+- `npm run test` - Run Jest tests (full test suite with 177+ tests)
+- `npm run test -- --testPathPattern="filename"` - Run specific test file
+- `npm run test -- --coverage` - Run tests with coverage report
 - Tests are configured with jsdom environment and jest-canvas-mock
+- Coverage thresholds: 80% lines, 85% functions, 80% branches, 80% statements
 
 ### Code Quality
 - `npm run lint` - Run ESLint on TypeScript/JavaScript files
@@ -123,10 +126,17 @@ Canvas components use React patterns:
 - Performance optimized with proper dependency arrays
 
 ### Testing Strategy
-- Jest with jsdom for DOM testing
-- Canvas mocking for visualization tests
-- React Testing Library integration ready
-- Component-level unit tests with `.test.ts` files alongside components
+- **Comprehensive Test Suite**: 177+ tests across all major components
+- **Jest Configuration**: jsdom environment with jest-canvas-mock for Canvas API testing
+- **Test Infrastructure**: Complete mock system in `src/__tests__/mocks/` for VS Code API, Web Audio API, Canvas, and decoder
+- **Test Categories**:
+  - Unit tests: Extension activation, message types, configuration, disposable patterns
+  - Integration tests: Context interactions, message flow, React provider hierarchies
+  - Component tests: UI interactions, canvas rendering, user events, keyboard shortcuts
+  - Utility tests: Mathematical functions (Hz-Mel conversion), audio context creation
+- **Test File Pattern**: `.test.ts/.test.tsx` files alongside components
+- **Mock Patterns**: Comprehensive mocking for VS Code API, audio processing, and canvas operations
+- **Coverage Requirements**: Enforced thresholds ensure quality (80%+ lines, 85%+ functions)
 
 ### Type Safety
 - Comprehensive TypeScript throughout
@@ -134,6 +144,21 @@ Canvas components use React patterns:
 - Message type definitions in `src/messageTypes.ts`
 - Interface definitions for all contexts and props
 - Strict ESLint configuration for code quality
+
+### File Association Configuration
+The extension supports multiple audio formats. To set as default editor in VS Code:
+```jsonc
+"workbench.editorAssociations": {
+    "*.wav": "wavPreview.audioPreview",
+    "*.mp3": "wavPreview.audioPreview",
+    "*.aac": "wavPreview.audioPreview",
+    "*.ogg": "wavPreview.audioPreview",
+    "*.flac": "wavPreview.audioPreview",
+    "*.opus": "wavPreview.audioPreview",
+    "*.m4a": "wavPreview.audioPreview",
+    "*.sph": "wavPreview.audioPreview"
+}
+```
 
 ## Important Implementation Notes
 
@@ -181,3 +206,12 @@ The codebase uses a unified disposable pattern with:
 - `Disposable` base class with automatic disposal tracking
 - `VSCodeDisposableAdapter` to bridge VS Code and custom disposables
 - All major components implement proper cleanup to prevent memory leaks
+
+### Test Development Guidelines
+When adding new tests:
+- Follow existing patterns in `src/__tests__/` for mocks and utilities
+- Use `TestWrapper` components for context provider mocking
+- Mock canvas operations using jest-canvas-mock patterns
+- Include edge cases, error handling, and cleanup testing
+- Maintain coverage thresholds (80%+ lines, 85%+ functions)
+- Test files should be co-located with source files using `.test.ts/.test.tsx` pattern
