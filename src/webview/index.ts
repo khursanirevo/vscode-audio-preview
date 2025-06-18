@@ -4,7 +4,7 @@ import Decoder from "./decoder";
 import WebView from "./components/webview/webview";
 
 export interface vscode {
-  postMessage(message): void;
+  postMessage(message: WebviewMessage): void;
 }
 
 // vscode must be passed by this special function

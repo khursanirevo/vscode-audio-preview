@@ -70,7 +70,7 @@ export function getLimitedValueInRange(
 
 export function getValueInEnum(
   targetValue: number,
-  enumType,
+  enumType: Record<string, number>,
   defaultValue: number,
 ): number {
   if (Object.values(enumType).includes(targetValue)) {

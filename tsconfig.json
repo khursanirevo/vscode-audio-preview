@@ -6,12 +6,21 @@
     "lib": ["es2020", "DOM"],
     "sourceMap": true,
     "rootDir": "src",
-    "strict": false /* enable all strict type-checking options */,
-    "esModuleInterop": true
+    "strict": false /* will enable individual strict options below */,
+    "esModuleInterop": true,
+    /* Strict Type-Checking Options - enabled incrementally */
+    "noImplicitAny": true,
+    "strictNullChecks": false, /* TODO: enable after fixing null checks */
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": false, /* TODO: enable after fixing property initialization */
+    "noImplicitThis": true,
+    "alwaysStrict": true,
     /* Additional Checks */
-    // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-    // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-    // "noUnusedParameters": true,  /* Report errors on unused parameters. */
+    "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+    "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+    "noUnusedLocals": false, /* TODO: enable after cleanup */
+    "noUnusedParameters": false  /* TODO: enable after cleanup */
   },
   "exclude": ["node_modules", ".vscode-test"]
 }
