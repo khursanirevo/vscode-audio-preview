@@ -1,0 +1,13 @@
+.analyzerComponent {
+  border: 1px solid var(--vscode-foreground);
+}
+
+.analyzeResultBox {
+  position: relative;
+  margin: 0.5em;
+}
+
+.canvasBox {
+  margin-bottom: 1em;
+  position: relative;
+}
