@@ -40,7 +40,7 @@ The decoder component requires Docker for building WebAssembly:
 - **Document Model**: AudioPreviewDocument handles file reading and watching
 - **Webview Communication**: Type-safe message passing between extension and webview via `src/messageTypes.ts`
 - **Audio Processing**: WebAssembly decoder in `src/decoder/` for audio file processing
-- **UI Components**: React-based architecture in `src/webview/components/react/`
+- **UI Components**: React-based architecture in `src/webview/components/`
 
 ### Build Configuration
 The project uses Webpack with three configurations:
