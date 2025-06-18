@@ -1,16 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import { useAnalyze } from '../../hooks/useAnalyze';
-import { AnalyzeSettingsProps } from '../../contexts/AnalyzeSettingsContext';
+import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
+import { useVSCode } from '../../hooks/useVSCode';
+import { canvasSizes } from '../../types';
 import '../../styles/figure.css';
 
 export interface WaveformProps {
-  width?: number;
-  height?: number;
-  settings?: AnalyzeSettingsProps;
-  sampleRate?: number;
-  channelData?: Float32Array;
-  ch?: number;
-  numOfCh?: number;
   channelIndex: number;
   numberOfChannels: number;
 }
@@ -22,6 +17,15 @@ export function Waveform({
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const axisCanvasRef = useRef<HTMLCanvasElement>(null);
   const analyze = useAnalyze();
+  const analyzeSettings = useAnalyzeSettings();
+  const { audioBuffer } = useVSCode();
+  
+  const width = canvasSizes.waveformWidth;
+  const height = canvasSizes.waveformHeight;
+  const sampleRate = audioBuffer?.sampleRate || 44100;
+  const channelData = audioBuffer?.getChannelData(channelIndex);
+  const ch = channelIndex;
+  const numOfCh = numberOfChannels;
 
   const MIN_DATA_POINTS_PER_PIXEL = 5;
   const WAVEFORM_CANVAS_WIDTH = 1000; // From AnalyzeSettingsService
@@ -29,7 +33,7 @@ export function Waveform({
   useEffect(() => {
     const mainCanvas = mainCanvasRef.current;
     const axisCanvas = axisCanvasRef.current;
-    if (!mainCanvas || !axisCanvas) return;
+    if (!mainCanvas || !axisCanvas || !channelData || !analyzeSettings) return;
 
     const context = mainCanvas.getContext('2d', { alpha: false });
     const axisContext = axisCanvas.getContext('2d');
@@ -46,15 +50,15 @@ export function Waveform({
 
     // Draw horizontal axis
     const [niceT, digitT] = analyze.roundToNearestNiceNumber(
-      (settings.maxTime - settings.minTime) / 10
+      (analyzeSettings.maxTime - analyzeSettings.minTime) / 10
     );
-    const dx = width / (settings.maxTime - settings.minTime);
-    const t0 = Math.ceil(settings.minTime / niceT) * niceT;
-    const numTAxis = Math.floor((settings.maxTime - settings.minTime) / niceT);
+    const dx = width / (analyzeSettings.maxTime - analyzeSettings.minTime);
+    const t0 = Math.ceil(analyzeSettings.minTime / niceT) * niceT;
+    const numTAxis = Math.floor((analyzeSettings.maxTime - analyzeSettings.minTime) / niceT);
     
     for (let i = 0; i <= numTAxis; i++) {
       const t = t0 + niceT * i;
-      const x = (t - settings.minTime) * dx;
+      const x = (t - analyzeSettings.minTime) * dx;
 
       axisContext.fillStyle = 'rgb(245,130,32)';
       if (width * (5 / 100) < x && x < width * (95 / 100)) {
@@ -69,18 +73,18 @@ export function Waveform({
 
     // Draw vertical axis
     const [niceA, digitA] = analyze.roundToNearestNiceNumber(
-      (settings.maxAmplitude - settings.minAmplitude) /
-        (10 * settings.waveformVerticalScale)
+      (analyzeSettings.maxAmplitude - analyzeSettings.minAmplitude) /
+        (10 * analyzeSettings.waveformVerticalScale)
     );
-    const dy = height / (settings.maxAmplitude - settings.minAmplitude);
-    const a0 = Math.ceil(settings.minAmplitude / niceA) * niceA;
+    const dy = height / (analyzeSettings.maxAmplitude - analyzeSettings.minAmplitude);
+    const a0 = Math.ceil(analyzeSettings.minAmplitude / niceA) * niceA;
     const numAAxis = Math.floor(
-      (settings.maxAmplitude - settings.minAmplitude) / niceA
+      (analyzeSettings.maxAmplitude - analyzeSettings.minAmplitude) / niceA
     );
     
     for (let i = 0; i <= numAAxis; i++) {
       const a = a0 + niceA * i;
-      const y = height - (a - settings.minAmplitude) * dy;
+      const y = height - (a - analyzeSettings.minAmplitude) * dy;
 
       axisContext.fillStyle = 'rgb(245,130,32)';
       if (12 < y && y < height) {
@@ -96,8 +100,8 @@ export function Waveform({
       }
     }
 
-    const startIndex = Math.floor(settings.minTime * sampleRate);
-    const endIndex = Math.floor(settings.maxTime * sampleRate);
+    const startIndex = Math.floor(analyzeSettings.minTime * sampleRate);
+    const endIndex = Math.floor(analyzeSettings.maxTime * sampleRate);
     
     // Limit data size for performance
     const step = Math.ceil((endIndex - startIndex) / 200000);
@@ -109,8 +113,8 @@ export function Waveform({
     for (let i = 0; i < data.length; i++) {
       // Convert data to fit within the vertical axis range
       const d =
-        (data[i] - settings.minAmplitude) /
-        (settings.maxAmplitude - settings.minAmplitude);
+        (data[i] - analyzeSettings.minAmplitude) /
+        (analyzeSettings.maxAmplitude - analyzeSettings.minAmplitude);
 
       const x = (i / data.length) * width;
       const y = height * (1 - d);
@@ -149,12 +153,14 @@ export function Waveform({
   }, [
     width,
     height,
-    settings,
+    analyzeSettings,
     sampleRate,
     channelData,
     ch,
     numOfCh,
     analyze,
+    channelIndex,
+    numberOfChannels,
   ]);
 
   return (

@@ -34,13 +34,13 @@ export interface AnalyzeSettingsProps {
 }
 
 // Canvas size constants
-export const CANVAS_SIZES = {
-  WAVEFORM_WIDTH: 1000,
-  WAVEFORM_HEIGHT: 200,
-  WAVEFORM_VERTICAL_SCALE_MAX: 2.0,
-  WAVEFORM_VERTICAL_SCALE_MIN: 0.2,
-  SPECTROGRAM_WIDTH: 1800,
-  SPECTROGRAM_HEIGHT: 600,
-  SPECTROGRAM_VERTICAL_SCALE_MAX: 2.0,
-  SPECTROGRAM_VERTICAL_SCALE_MIN: 0.2,
+export const canvasSizes = {
+  waveformWidth: 1000,
+  waveformHeight: 200,
+  waveformVerticalScaleMax: 2.0,
+  waveformVerticalScaleMin: 0.2,
+  spectrogramWidth: 1800,
+  spectrogramHeight: 600,
+  spectrogramVerticalScaleMax: 2.0,
+  spectrogramVerticalScaleMin: 0.2,
 } as const;

@@ -201,10 +201,11 @@ export const FigureInteraction: React.FC<FigureInteractionProps> = ({
         maxFrequency: 22050,
         waveformVisible: true,
         spectrogramVisible: true,
-        autoAnalyze: false,
-        playerDefault: false,
-        analyzeDefault: false,
         spectrogramAmplitudeRange: -90,
+        waveformVerticalScale: 1.0,
+        minAmplitude: -1.0,
+        maxAmplitude: 1.0,
+        spectrogramVerticalScale: 1.0,
       };
       
       if (event.ctrlKey) {

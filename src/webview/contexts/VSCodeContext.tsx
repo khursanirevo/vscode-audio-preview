@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useEffect, useState, ReactNode } fro
 import { ExtMessage, ExtMessageType, WebviewMessage, WebviewMessageType, PostMessage } from '../../message';
 import { Config } from '../../config';
 import { EventType } from '../events';
-import createDecoder from '../decoder';
+import Decoder from '../decoder';
 import createAudioContext from '../createAudioContext';
 
 export interface vscode {
@@ -125,7 +125,7 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
     async function processAudio() {
       try {
         console.log('Creating decoder...');
-        const decoder = await createDecoder(fileData);
+        const decoder = await Decoder.create(fileData);
 
         // Read header info
         console.log('Reading audio info...');

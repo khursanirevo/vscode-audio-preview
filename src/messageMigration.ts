@@ -12,7 +12,7 @@ export function migrateExtMessage(oldMsg: OldMsg.ExtMessage): NewMsg.ExtMessage 
   if (OldMsg.ExtMessageType.isRELOAD(oldMsg)) {
     return { type: 'EXT_RELOAD' };
   }
-  throw new Error(`Unknown ExtMessage type: ${(oldMsg as any).type}`);
+  throw new Error(`Unknown ExtMessage type: ${(oldMsg as { type?: unknown }).type}`);
 }
 
 // Convert new Extension messages to old format
@@ -50,7 +50,7 @@ export function migrateWebviewMessage(oldMsg: OldMsg.WebviewMessage): NewMsg.Web
     const errorMsg = oldMsg as OldMsg.WebviewErrorMessage;
     return { type: 'WV_ERROR', payload: errorMsg.data };
   }
-  throw new Error(`Unknown WebviewMessage type: ${(oldMsg as any).type}`);
+  throw new Error(`Unknown WebviewMessage type: ${(oldMsg as { type?: unknown }).type}`);
 }
 
 // Convert new Webview messages to old format

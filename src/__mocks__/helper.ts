@@ -39,12 +39,13 @@ export async function waitVSCodeMessageForAction(
 
     webviewMessageTarget.addEventListener(
       EventType.VSCODE_MESSAGE,
-      (e: MessageEvent<ExtMessage | WebviewMessage>) => {
+      (e: Event) => {
+        const messageEvent = e as MessageEvent<ExtMessage | WebviewMessage>;
         clearTimeout(timer);
-        if (WebviewMessageType.isERROR(e.data)) {
-          console.log(e.data.data.message);
+        if (WebviewMessageType.isERROR(messageEvent.data)) {
+          console.log(messageEvent.data.data.message);
         }
-        resolve(e.data);
+        resolve(messageEvent.data);
       },
       { once: true },
     );
@@ -66,9 +67,10 @@ export async function waitEventForAction(
 
     target.addEventListener(
       expectedEventType,
-      (e: CustomEvent) => {
+      (e: Event) => {
+        const customEvent = e as CustomEvent;
         clearTimeout(timer);
-        resolve(e.detail);
+        resolve(customEvent.detail);
       },
       { once: true },
     );

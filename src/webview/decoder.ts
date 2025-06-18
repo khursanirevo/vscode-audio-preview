@@ -1,5 +1,5 @@
 // You should compile wasm before build extension
-// @ts-ignore - wasm module generated dynamically
+// @ts-expect-error - wasm module generated dynamically
 import Module from "../decoder/wasm/decoder.js";
 
 interface Status {
@@ -27,17 +27,27 @@ interface DecodeAudioResult {
   samples: Vector;
 }
 
+interface WasmModule {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  FS: {
+    writeFile: (path: string, data: Uint8Array) => void;
+    unlink: (path: string) => void;
+  };
+  getAudioInfo: (path: string) => AudioInfoResult;
+  decodeAudio: (path: string) => DecodeAudioResult;
+}
+
 export default class Decoder {
   private static _audioFilePath = "audio";
 
-  private _module: any; // WASM module type
+  private _module: WasmModule; // WASM module type
 
   private _fileSize: number; // byte
   public get fileSize() {
     return this._fileSize;
   }
 
-  constructor(module: any, fileSize: number) {
+  constructor(module: WasmModule, fileSize: number) {
     this._module = module;
     this._fileSize = fileSize;
   }

@@ -1,17 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import { useAnalyze } from '../../hooks/useAnalyze';
+import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
+import { useVSCode } from '../../hooks/useVSCode';
+import { FrequencyScale, canvasSizes } from '../../types';
 import { AnalyzeSettingsProps } from '../../contexts/AnalyzeSettingsContext';
-import { FrequencyScale } from '../../types';
 import '../../styles/figure.css';
 
 export interface SpectrogramProps {
-  width?: number;
-  height?: number;
-  settings?: AnalyzeSettingsProps;
-  sampleRate?: number;
-  audioBuffer?: AudioBuffer;
-  ch?: number;
-  numOfCh?: number;
   channelIndex: number;
   numberOfChannels: number;
 }
@@ -23,6 +18,14 @@ export function Spectrogram({
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const axisCanvasRef = useRef<HTMLCanvasElement>(null);
   const analyze = useAnalyze();
+  const analyzeSettings = useAnalyzeSettings();
+  const { audioBuffer } = useVSCode();
+  
+  const width = canvasSizes.spectrogramWidth;
+  const height = canvasSizes.spectrogramHeight;
+  const sampleRate = audioBuffer?.sampleRate || 44100;
+  const ch = channelIndex;
+  const numOfCh = numberOfChannels;
 
   // Draw time axis helper
   const drawTimeAxis = (
@@ -33,15 +36,15 @@ export function Spectrogram({
     axisContext.font = '20px Arial';
 
     const [niceT, digit] = analyze.roundToNearestNiceNumber(
-      (settings.maxTime - settings.minTime) / 10
+      (analyzeSettings.maxTime - analyzeSettings.minTime) / 10
     );
-    const dx = width / (settings.maxTime - settings.minTime);
-    const t0 = Math.ceil(settings.minTime / niceT) * niceT;
-    const numAxis = Math.floor((settings.maxTime - settings.minTime) / niceT);
+    const dx = width / (analyzeSettings.maxTime - analyzeSettings.minTime);
+    const t0 = Math.ceil(analyzeSettings.minTime / niceT) * niceT;
+    const numAxis = Math.floor((analyzeSettings.maxTime - analyzeSettings.minTime) / niceT);
     
     for (let i = 0; i <= numAxis; i++) {
       const t = t0 + niceT * i;
-      const x = (t - settings.minTime) * dx;
+      const x = (t - analyzeSettings.minTime) * dx;
 
       axisContext.fillStyle = 'rgb(245,130,32)';
       if (width * (5 / 100) < x && x < width * (95 / 100)) {
@@ -79,7 +82,7 @@ export function Spectrogram({
   useEffect(() => {
     const mainCanvas = mainCanvasRef.current;
     const axisCanvas = axisCanvasRef.current;
-    if (!mainCanvas || !axisCanvas) return;
+    if (!mainCanvas || !axisCanvas || !audioBuffer || !analyzeSettings) return;
 
     const context = mainCanvas.getContext('2d', { alpha: false });
     const axisContext = axisCanvas.getContext('2d');
@@ -90,12 +93,12 @@ export function Spectrogram({
     axisContext.clearRect(0, 0, width, height);
 
     // Adjust settings for log scale if needed
-    const adjustedSettings = { ...settings };
-    if (settings.frequencyScale === FrequencyScale.Log && settings.minFrequency < 1) {
+    const adjustedSettings = { ...analyzeSettings };
+    if (analyzeSettings.frequencyScale === FrequencyScale.Log && analyzeSettings.minFrequency < 1) {
       adjustedSettings.minFrequency = 1;
     }
 
-    switch (settings.frequencyScale) {
+    switch (analyzeSettings.frequencyScale) {
       case FrequencyScale.Linear:
         drawLinearAxis();
         drawLinearSpectrogram();
@@ -260,12 +263,14 @@ export function Spectrogram({
   }, [
     width,
     height,
-    settings,
+    analyzeSettings,
     sampleRate,
     audioBuffer,
     ch,
     numOfCh,
     analyze,
+    channelIndex,
+    numberOfChannels,
   ]);
 
   return (
