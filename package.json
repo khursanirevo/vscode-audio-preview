@@ -108,6 +108,8 @@
     "@types/jest": "^27.4.1",
     "@types/node": "^16.18.86",
     "@types/ooura": "^2.1.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "@types/vscode": "^1.59.1",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
@@ -129,6 +131,8 @@
     "assert": "^2.0.0",
     "ooura": "^2.1.6",
     "path-browserify": "^1.0.1",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }

@@ -39,14 +39,14 @@ const extensionConfig = {
 const webviewConfig = {
   target: "web",
 
-  entry: "./src/webview/index.ts",
+  entry: "./src/webview/index.tsx",
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "audioPreview.js",
   },
   devtool: "source-map",
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: [".tsx", ".ts", ".js"],
     fallback: {
       assert: require.resolve("assert"), // Ooura(fft lib) contains assert
       path: require.resolve("path-browserify"),
@@ -59,7 +59,7 @@ const webviewConfig = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
           {

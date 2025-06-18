@@ -8,6 +8,7 @@
     "rootDir": "src",
     "strict": false /* will enable individual strict options below */,
     "esModuleInterop": true,
+    "jsx": "react-jsx",
     /* Strict Type-Checking Options - enabled incrementally */
     "noImplicitAny": true,
     "strictNullChecks": false, /* TODO: enable after fixing null checks */
