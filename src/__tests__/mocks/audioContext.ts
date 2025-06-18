@@ -361,6 +361,43 @@ export function cleanupAudioContextMocks() {
   delete (global as any).AudioBufferSourceNode;
 }
 
+// Factory functions for easier mocking
+export const mockAudioContext = () => {
+  const ctx = new MockAudioContext();
+  jest.spyOn(ctx, 'createGain').mockReturnValue(new MockGainNode(ctx));
+  jest.spyOn(ctx, 'createBiquadFilter').mockReturnValue(new MockBiquadFilterNode(ctx));
+  jest.spyOn(ctx, 'createBufferSource').mockReturnValue(new MockAudioBufferSourceNode(ctx));
+  jest.spyOn(ctx, 'createAnalyser').mockReturnValue(new MockAnalyserNode(ctx));
+  return ctx;
+};
+
+export const mockAudioNode = () => {
+  const ctx = new MockAudioContext();
+  return new MockAudioNode(ctx);
+};
+export const mockGainNode = () => {
+  const ctx = new MockAudioContext();
+  return new MockGainNode(ctx);
+};
+export const mockBiquadFilterNode = () => {
+  const ctx = new MockAudioContext();
+  return new MockBiquadFilterNode(ctx);
+};
+export const mockAudioBufferSourceNode = () => {
+  const ctx = new MockAudioContext();
+  return new MockAudioBufferSourceNode(ctx);
+};
+export const mockAnalyserNode = () => {
+  const ctx = new MockAudioContext();
+  return new MockAnalyserNode(ctx);
+};
+export const mockAudioBuffer = (options?: Partial<{ numberOfChannels: number; length: number; sampleRate: number }>) => 
+  new MockAudioBuffer({
+    numberOfChannels: options?.numberOfChannels ?? 2,
+    length: options?.length ?? 44100,
+    sampleRate: options?.sampleRate ?? 44100
+  });
+
 export default {
   MockAudioContext,
   MockOfflineAudioContext,
@@ -371,5 +408,12 @@ export default {
   MockAudioBufferSourceNode,
   MockAnalyserNode,
   setupAudioContextMocks,
-  cleanupAudioContextMocks
+  cleanupAudioContextMocks,
+  mockAudioContext,
+  mockAudioNode,
+  mockGainNode,
+  mockBiquadFilterNode,
+  mockAudioBufferSourceNode,
+  mockAnalyserNode,
+  mockAudioBuffer
 };

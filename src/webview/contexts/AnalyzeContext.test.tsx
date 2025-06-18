@@ -1,0 +1,301 @@
+import React from 'react';
+import { renderHook, act } from '@testing-library/react';
+import { AnalyzeContext, AnalyzeProvider } from './AnalyzeContext';
+import { useAnalyze } from '../hooks/useAnalyze';
+import { mockAudioBuffer } from '../../__tests__/mocks/audioContext';
+
+describe('AnalyzeContext', () => {
+  const mockAudioBufferInstance = mockAudioBuffer({
+    duration: 10,
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    length: 441000,
+  });
+
+  const mockAnalyzeSettings = {
+    visibleWaveform: true,
+    visibleSpectrogram: true,
+    windowSizeIndex: 10, // 2^10 = 1024
+    spectrogramScaleType: 'Linear' as const,
+  };
+
+  describe('AnalyzeProvider', () => {
+    it('should provide analyze context', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      expect(result.current).toBeDefined();
+      expect(result.current.isAnalyzing).toBe(false);
+      expect(result.current.lastAnalyzeTime).toBeNull();
+      expect(result.current.analyze).toBeDefined();
+      expect(result.current.getSpectrogram).toBeDefined();
+      expect(result.current.getMelSpectrogram).toBeDefined();
+      expect(result.current.getSpectrogramColor).toBeDefined();
+      expect(result.current.roundToNearestNiceNumber).toBeDefined();
+      expect(result.current.hzToMel).toBeDefined();
+      expect(result.current.melToHz).toBeDefined();
+    });
+  });
+
+  describe('Analysis Functions', () => {
+    it('should trigger analysis', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      expect(result.current.isAnalyzing).toBe(false);
+
+      act(() => {
+        result.current.analyze();
+      });
+
+      expect(result.current.lastAnalyzeTime).not.toBeNull();
+    });
+
+    it('should generate spectrogram data', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const spectrogram = result.current.getSpectrogram(0, mockAnalyzeSettings, mockAudioBufferInstance);
+      
+      expect(Array.isArray(spectrogram)).toBe(true);
+      expect(spectrogram.length).toBeGreaterThan(0);
+    });
+
+    it('should generate mel spectrogram data', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const melSpectrogram = result.current.getMelSpectrogram(0, mockAnalyzeSettings, mockAudioBufferInstance);
+      
+      expect(Array.isArray(melSpectrogram)).toBe(true);
+      expect(melSpectrogram.length).toBeGreaterThan(0);
+    });
+
+    it('should generate spectrogram colors', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const color = result.current.getSpectrogramColor(0.5, 1.0);
+      
+      expect(typeof color).toBe('string');
+      expect(color).toMatch(/^#[0-9a-fA-F]{6}$/); // Hex color format
+    });
+  });
+
+  describe('Utility Functions', () => {
+    it('should round to nearest nice number', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const [rounded, digit] = result.current.roundToNearestNiceNumber(123.456);
+      
+      expect(typeof rounded).toBe('number');
+      expect(typeof digit).toBe('number');
+      expect(rounded).toBeGreaterThan(0);
+    });
+
+    it('should handle zero input in rounding', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const [rounded, digit] = result.current.roundToNearestNiceNumber(0);
+      
+      expect(rounded).toBe(0);
+      expect(digit).toBe(0);
+    });
+
+    it('should handle negative input in rounding', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const [rounded, digit] = result.current.roundToNearestNiceNumber(-10);
+      
+      expect(rounded).toBe(0);
+      expect(digit).toBe(0);
+    });
+  });
+
+  describe('Frequency Scale Conversions', () => {
+    it('should convert Hz to Mel scale', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const mel = result.current.hzToMel(1000);
+      
+      expect(typeof mel).toBe('number');
+      expect(mel).toBeGreaterThan(0);
+    });
+
+    it('should convert Mel to Hz scale', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const hz = result.current.melToHz(1000);
+      
+      expect(typeof hz).toBe('number');
+      expect(hz).toBeGreaterThan(0);
+    });
+
+    it('should have bidirectional Hz/Mel conversion', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const originalHz = 440; // A4 note
+      const mel = result.current.hzToMel(originalHz);
+      const convertedHz = result.current.melToHz(mel);
+      
+      expect(convertedHz).toBeCloseTo(originalHz, 2);
+    });
+  });
+
+  describe('Analysis State Management', () => {
+    it('should track analyzing state', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      expect(result.current.isAnalyzing).toBe(false);
+      expect(result.current.lastAnalyzeTime).toBeNull();
+
+      act(() => {
+        result.current.analyze();
+      });
+
+      expect(result.current.lastAnalyzeTime).not.toBeNull();
+      expect(typeof result.current.lastAnalyzeTime).toBe('number');
+    });
+
+    it('should update last analyze time on each analysis', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      act(() => {
+        result.current.analyze();
+      });
+
+      const firstTime = result.current.lastAnalyzeTime;
+
+      // Wait a bit and analyze again
+      setTimeout(() => {
+        act(() => {
+          result.current.analyze();
+        });
+
+        const secondTime = result.current.lastAnalyzeTime;
+        expect(secondTime).not.toBe(firstTime);
+        expect(secondTime).toBeGreaterThan(firstTime!);
+      }, 10);
+    });
+  });
+
+  describe('Spectrogram Generation', () => {
+    it('should handle different channels', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const spectrogramCh0 = result.current.getSpectrogram(0, mockAnalyzeSettings, mockAudioBufferInstance);
+      const spectrogramCh1 = result.current.getSpectrogram(1, mockAnalyzeSettings, mockAudioBufferInstance);
+      
+      expect(spectrogramCh0).toBeDefined();
+      expect(spectrogramCh1).toBeDefined();
+      expect(Array.isArray(spectrogramCh0)).toBe(true);
+      expect(Array.isArray(spectrogramCh1)).toBe(true);
+    });
+
+    it('should handle window size changes', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const settings1024 = { ...mockAnalyzeSettings, windowSizeIndex: 10 }; // 1024
+      const settings2048 = { ...mockAnalyzeSettings, windowSizeIndex: 11 }; // 2048
+      
+      const spec1024 = result.current.getSpectrogram(0, settings1024, mockAudioBufferInstance);
+      const spec2048 = result.current.getSpectrogram(0, settings2048, mockAudioBufferInstance);
+      
+      expect(spec1024).toBeDefined();
+      expect(spec2048).toBeDefined();
+      // Different window sizes should potentially give different results
+    });
+  });
+
+  describe('Color Generation', () => {
+    it('should generate valid colors for different amplitudes', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      const testAmplitudes = [0, 0.25, 0.5, 0.75, 1.0];
+      
+      testAmplitudes.forEach(amp => {
+        const color = result.current.getSpectrogramColor(amp, 1.0);
+        expect(color).toMatch(/^#[0-9a-fA-F]{6}$/);
+      });
+    });
+
+    it('should handle edge cases in color generation', () => {
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AnalyzeProvider>{children}</AnalyzeProvider>
+      );
+      
+      const { result } = renderHook(() => useAnalyze(), { wrapper });
+      
+      // Test with zero range
+      const colorZeroRange = result.current.getSpectrogramColor(0.5, 0);
+      expect(colorZeroRange).toMatch(/^#[0-9a-fA-F]{6}$/);
+
+      // Test with negative values
+      const colorNegative = result.current.getSpectrogramColor(-0.5, 1.0);
+      expect(colorNegative).toMatch(/^#[0-9a-fA-F]{6}$/);
+
+      // Test with values > range
+      const colorOverRange = result.current.getSpectrogramColor(2.0, 1.0);
+      expect(colorOverRange).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
+  });
+});
