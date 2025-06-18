@@ -37,6 +37,7 @@ module.exports = {
   moduleNameMapper: {
     "\\.css$": "<rootDir>/__mocks__/styleMock.js",
     "^@/(.*)$": "<rootDir>/$1",
-    "^vscode$": "<rootDir>/__tests__/mocks/vscode.ts"
+    "^vscode$": "<rootDir>/__tests__/mocks/vscode.ts",
+    "^../decoder$": "<rootDir>/__tests__/mocks/decoder.ts"
   }
 };
