@@ -64,3 +64,6 @@ export function isWebviewWriteWavMessage(msg: WebviewMessage): msg is Extract<We
 export function isWebviewErrorMessage(msg: WebviewMessage): msg is Extract<WebviewMessage, { type: 'WV_ERROR' }> {
   return msg.type === 'WV_ERROR';
 }
+
+// Utility type for posting messages
+export type PostMessage = (message: WebviewMessage) => void;

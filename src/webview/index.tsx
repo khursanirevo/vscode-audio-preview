@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { WebView } from './components/react/WebView';
-import { WebviewMessage } from '../message';
+import { WebviewMessage } from '../messageTypes';
 import Decoder from './decoder';
 import "./styles/vscode.css";
 

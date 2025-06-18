@@ -4,10 +4,11 @@ import { getNonce } from "./util";
 import { AnalyzeDefault, PlayerDefault } from "./config";
 import {
   ExtMessage,
-  ExtMessageType,
   WebviewMessage,
-  WebviewMessageType,
-} from "./message";
+  isWebviewDataMessage,
+  isWebviewWriteWavMessage,
+  isWebviewErrorMessage,
+} from "./messageTypes";
 
 class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
   static async create(
@@ -114,7 +115,7 @@ export class AudioPreviewEditorProvider
         await document.reload();
         for (const webviewPanel of this.webviews.get(document.uri)) {
           this.postMessage(webviewPanel.webview, {
-            type: ExtMessageType.RELOAD,
+            type: 'EXT_RELOAD',
           });
         }
       }),
@@ -156,12 +157,12 @@ export class AudioPreviewEditorProvider
     document: AudioPreviewDocument,
   ) {
     switch (msg.type) {
-      case WebviewMessageType.CONFIG: {
+      case 'WV_CONFIG': {
         // read config
         const config = vscode.workspace.getConfiguration("WavPreview");
         this.postMessage(webviewPanel.webview, {
-          type: ExtMessageType.CONFIG,
-          data: {
+          type: 'EXT_CONFIG',
+          payload: {
             autoAnalyze: config.get("autoAnalyze"),
             playerDefault: config.get("playerDefault") as PlayerDefault,
             analyzeDefault: config.get("analyzeDefault") as AnalyzeDefault,
@@ -170,8 +171,8 @@ export class AudioPreviewEditorProvider
         break;
       }
 
-      case WebviewMessageType.DATA:
-        if (WebviewMessageType.isDATA(msg)) {
+      case 'WV_DATA':
+        if (isWebviewDataMessage(msg)) {
           if (!vscode.workspace.isTrusted) {
             throw new Error("Cannot play audio in untrusted workspaces");
           }
@@ -184,26 +185,26 @@ export class AudioPreviewEditorProvider
           Create a new Uint8Array with a copy of the slice to get a buffer of only the sliced range
           */
           const dd = document.documentData;
-          const samples = new Uint8Array(dd.slice(msg.data.start, msg.data.end))
+          const samples = new Uint8Array(dd.slice(msg.payload.start, msg.payload.end))
             .buffer;
 
           this.postMessage(webviewPanel.webview, {
-            type: ExtMessageType.DATA,
-            data: {
+            type: 'EXT_DATA',
+            payload: {
               samples: samples,
-              start: msg.data.start,
-              end: msg.data.end,
+              start: msg.payload.start,
+              end: msg.payload.end,
               wholeLength: dd.length,
             },
           });
         }
         break;
 
-      case WebviewMessageType.WRITE_WAV:
-        if (WebviewMessageType.isWriteWav(msg)) {
+      case 'WV_WRITE_WAV':
+        if (isWebviewWriteWavMessage(msg)) {
           const dir = vscode.workspace.getWorkspaceFolder(document.uri);
-          const wavUri = vscode.Uri.joinPath(dir.uri, msg.data.filename);
-          const content = new Uint8Array(msg.data.samples);
+          const wavUri = vscode.Uri.joinPath(dir.uri, msg.payload.filename);
+          const content = new Uint8Array(msg.payload.samples);
           await vscode.workspace.fs.writeFile(wavUri, content);
           vscode.window.showInformationMessage(
             `Success! Wav file written to: ${wavUri.fsPath}`,
@@ -211,9 +212,9 @@ export class AudioPreviewEditorProvider
         }
         break;
 
-      case WebviewMessageType.ERROR:
-        if (WebviewMessageType.isERROR(msg)) {
-          vscode.window.showErrorMessage(msg.data.message);
+      case 'WV_ERROR':
+        if (isWebviewErrorMessage(msg)) {
+          vscode.window.showErrorMessage(msg.payload.message);
         }
     }
   }

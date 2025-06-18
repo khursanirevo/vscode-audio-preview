@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
 import { useVSCode } from '../../hooks/useVSCode';
-import { WebviewMessageType } from '../../../message';
+// No longer need to import WebviewMessageType
 import { encodeToWav } from '../../encoder';
 import './EasyCut.css';
 
@@ -39,8 +39,8 @@ export const EasyCut: React.FC = () => {
     const processedFilename = checkAndReplaceFilename(filename);
 
     postMessage({
-      type: WebviewMessageType.WRITE_WAV,
-      data: {
+      type: 'WV_WRITE_WAV',
+      payload: {
         filename: processedFilename,
         samples,
       },

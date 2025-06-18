@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState, ReactNode } from 'react';
-import { ExtMessage, ExtMessageType, WebviewMessage, WebviewMessageType, PostMessage } from '../../message';
+import { ExtMessage, WebviewMessage, PostMessage, isExtConfigMessage, isExtDataMessage, isExtReloadMessage } from '../../messageTypes';
 import { Config } from '../../config';
 import { EventType } from '../events';
 import Decoder from '../decoder';
@@ -47,43 +47,43 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
     const msg = event.data;
     
     switch (msg.type) {
-      case ExtMessageType.CONFIG:
-        if (ExtMessageType.isCONFIG(msg)) {
-          setConfig(msg.data);
+      case 'EXT_CONFIG':
+        if (isExtConfigMessage(msg)) {
+          setConfig(msg.payload);
           // Request initial data
           postMessage({
-            type: WebviewMessageType.DATA,
-            data: { start: 0, end: 500000 },
+            type: 'WV_DATA',
+            payload: { start: 0, end: 500000 },
           });
         }
         break;
 
-      case ExtMessageType.DATA:
-        if (ExtMessageType.isDATA(msg)) {
+      case 'EXT_DATA':
+        if (isExtDataMessage(msg)) {
           // Initialize fileData if first chunk
           if (!fileData) {
             console.log('start receiving data');
-            setFileData(new Uint8Array(msg.data.wholeLength));
+            setFileData(new Uint8Array(msg.payload.wholeLength));
           }
 
           // Update fileData with new chunk
           console.log(
-            `received data: ${msg.data.start} ~ ${msg.data.end} / ${msg.data.wholeLength}`
+            `received data: ${msg.payload.start} ~ ${msg.payload.end} / ${msg.payload.wholeLength}`
           );
-          const samples = new Uint8Array(msg.data.samples);
+          const samples = new Uint8Array(msg.payload.samples);
           setFileData(currentData => {
             if (currentData) {
-              currentData.set(samples, msg.data.start);
+              currentData.set(samples, msg.payload.start);
               return new Uint8Array(currentData); // Create new instance to trigger re-render
             }
             return currentData;
           });
 
           // Request next chunk if not complete
-          if (msg.data.end < msg.data.wholeLength) {
+          if (msg.payload.end < msg.payload.wholeLength) {
             postMessage({
-              type: WebviewMessageType.DATA,
-              data: { start: msg.data.end, end: msg.data.end + 3000000 },
+              type: 'WV_DATA',
+              payload: { start: msg.payload.end, end: msg.payload.end + 3000000 },
             });
           } else {
             console.log('finish receiving data');
@@ -92,13 +92,13 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
         }
         break;
 
-      case ExtMessageType.RELOAD:
+      case 'EXT_RELOAD':
         // Reset state for reload
         setConfig(null);
         setFileData(null);
         setIsLoading(true);
         setError(null);
-        postMessage({ type: WebviewMessageType.CONFIG });
+        postMessage({ type: 'WV_CONFIG' });
         break;
 
       default:
@@ -111,7 +111,7 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
     window.addEventListener(EventType.VSCODE_MESSAGE, handleMessage);
     
     // Request initial config
-    postMessage({ type: WebviewMessageType.CONFIG });
+    postMessage({ type: 'WV_CONFIG' });
 
     return () => {
       window.removeEventListener(EventType.VSCODE_MESSAGE, handleMessage);
