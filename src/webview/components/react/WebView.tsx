@@ -3,8 +3,10 @@ import { VSCodeProvider } from '../../contexts/VSCodeContext';
 import { useVSCode } from '../../hooks/useVSCode';
 import { PlayerSettingsProvider } from '../../contexts/PlayerSettingsContext';
 import { PlayerProvider } from '../../contexts/PlayerContext';
-import { InfoTable, AudioInfo } from './InfoTable';
-import { Player } from './Player';
+import { AnalyzeSettingsProvider } from '../../contexts/AnalyzeSettingsContext';
+import { AnalyzeProvider } from '../../contexts/AnalyzeContext';
+import { AudioInfo } from './InfoTable';
+import { WebViewInner } from './WebViewInner';
 import Decoder from '../../decoder';
 
 interface WebViewAppProps {
@@ -106,25 +108,16 @@ function WebViewContent({ createAudioContext, createDecoder }: WebViewAppProps) 
 
   return (
     <PlayerSettingsProvider>
-      <PlayerProvider audioContext={audioContext} audioBuffer={audioBuffer}>
-        <div id="infoTable">
-          <InfoTable audioInfo={audioInfo} />
-        </div>
-        
-        <div id="player">
-          <Player />
-        </div>
-        
-        <div id="settingTab">
-          {/* TODO: Implement settings component */}
-          <div>Settings (TODO)</div>
-        </div>
-        
-        <div id="analyzer">
-          {/* TODO: Implement analyzer component */}
-          <div>Analyzer (TODO)</div>
-        </div>
-      </PlayerProvider>
+      <AnalyzeSettingsProvider>
+        <AnalyzeProvider>
+          <WebViewInner 
+            config={config}
+            audioContext={audioContext}
+            audioBuffer={audioBuffer}
+            audioInfo={audioInfo}
+          />
+        </AnalyzeProvider>
+      </AnalyzeSettingsProvider>
     </PlayerSettingsProvider>
   );
 }
