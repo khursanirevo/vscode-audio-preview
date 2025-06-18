@@ -29,7 +29,7 @@ export const MockVSCodeProvider: React.FC<{
     audioBuffer: mockBuffer,
     config: mockConfig,
     isLoading: false,
-    error: null
+    error: null as any
   };
 
   // For now, just return children until we implement the actual contexts

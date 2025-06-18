@@ -76,7 +76,7 @@ const createMockWebviewPanel = () => ({
   },
   viewType: 'audioPreview',
   title: 'Audio Preview',
-  iconPath: undefined,
+  iconPath: undefined as any,
   options: {},
   viewColumn: 1,
   active: true,
@@ -130,14 +130,14 @@ const mockWorkspace = {
     has: jest.fn(),
     inspect: jest.fn()
   })),
-  workspaceFolders: [],
+  workspaceFolders: [] as any[],
   onDidChangeConfiguration: jest.fn(() => ({ dispose: jest.fn() })),
   onDidOpenTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
   onDidCloseTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
   onDidSaveTextDocument: jest.fn(() => ({ dispose: jest.fn() })),
-  textDocuments: [],
-  workspaceFile: undefined,
-  name: undefined,
+  textDocuments: [] as any[],
+  workspaceFile: undefined as any,
+  name: undefined as any,
   isTrusted: true
 };
 
@@ -149,8 +149,8 @@ const mockWindow = {
   showInformationMessage: jest.fn(),
   showOpenDialog: jest.fn(),
   showSaveDialog: jest.fn(),
-  activeTextEditor: undefined,
-  visibleTextEditors: [],
+  activeTextEditor: undefined as any,
+  visibleTextEditors: [] as any[],
   onDidChangeActiveTextEditor: jest.fn(() => ({ dispose: jest.fn() })),
   onDidChangeVisibleTextEditors: jest.fn(() => ({ dispose: jest.fn() })),
   onDidChangeTextEditorSelection: jest.fn(() => ({ dispose: jest.fn() })),
@@ -176,7 +176,7 @@ const mockCommands = {
 
 // Mock ExtensionContext
 const createMockExtensionContext = () => ({
-  subscriptions: [],
+  subscriptions: [] as any[],
   workspaceState: {
     get: jest.fn(),
     update: jest.fn(),
@@ -259,6 +259,26 @@ export const vscode = {
     // Reset any additional state if needed
   }
 };
+
+// Individual exports for named imports
+export const Uri = vscode.Uri;
+export const Disposable = vscode.Disposable;
+export const workspace = vscode.workspace;
+export const window = vscode.window;
+export const commands = vscode.commands;
+export const EventEmitter = vscode.EventEmitter;
+export const ViewColumn = vscode.ViewColumn;
+export const WebviewPanelTargetArea = vscode.WebviewPanelTargetArea;
+export const ConfigurationTarget = vscode.ConfigurationTarget;
+export const ExtensionMode = vscode.ExtensionMode;
+export const env = { uiKind: 1, remoteName: undefined }; // Mock env
+export const extensions = { getExtension: jest.fn() }; // Mock extensions
+
+// Add environment mock
+Object.assign(vscode, {
+  env: { uiKind: 1, remoteName: undefined },
+  extensions: { getExtension: jest.fn() }
+});
 
 // Set up global mock
 (global as any).vscode = vscode;

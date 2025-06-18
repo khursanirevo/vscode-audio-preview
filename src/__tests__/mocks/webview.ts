@@ -116,7 +116,7 @@ export const createMockWebviewPanel = () => {
       options: {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: []
+        localResourceRoots: [] as any[]
       },
       cspSource: 'vscode-webview:',
       asWebviewUri: jest.fn((uri: any) => ({
@@ -129,7 +129,7 @@ export const createMockWebviewPanel = () => {
     },
     viewType: 'audioPreview',
     title: 'Audio Preview',
-    iconPath: undefined,
+    iconPath: undefined as any,
     options: {},
     viewColumn: 1,
     active: true,
@@ -188,12 +188,12 @@ export class MockWebviewCollection {
 // Message simulation helpers
 export const simulateConfigMessage = (config: any): ExtMessage => ({
   type: 'EXT_CONFIG',
-  payload: { config }
+  payload: config
 });
 
-export const simulateDataMessage = (data: Uint8Array, offset: number, total: number): ExtMessage => ({
+export const simulateDataMessage = (samples: ArrayBufferLike, start: number, end: number, wholeLength: number): ExtMessage => ({
   type: 'EXT_DATA',
-  payload: { data, offset, total }
+  payload: { samples, start, end, wholeLength }
 });
 
 export const simulateReloadMessage = (): ExtMessage => ({
@@ -204,19 +204,19 @@ export const simulateWebviewConfigRequest = (): WebviewMessage => ({
   type: 'WV_CONFIG'
 });
 
-export const simulateWebviewDataRequest = (offset: number, length: number): WebviewMessage => ({
+export const simulateWebviewDataRequest = (start: number, end: number): WebviewMessage => ({
   type: 'WV_DATA',
-  payload: { offset, length }
+  payload: { start, end }
 });
 
-export const simulateWebviewWriteWav = (data: Uint8Array, filename: string): WebviewMessage => ({
+export const simulateWebviewWriteWav = (samples: ArrayBufferLike, filename: string): WebviewMessage => ({
   type: 'WV_WRITE_WAV',
-  payload: { data, filename }
+  payload: { samples, filename }
 });
 
-export const simulateWebviewError = (error: string): WebviewMessage => ({
+export const simulateWebviewError = (message: string): WebviewMessage => ({
   type: 'WV_ERROR',
-  payload: { error }
+  payload: { message }
 });
 
 export default {

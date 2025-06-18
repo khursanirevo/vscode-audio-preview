@@ -62,7 +62,7 @@ export class MockAudioBuffer {
 
 // Mock AudioNode base class
 export class MockAudioNode {
-  public context: MockAudioContext;
+  public context: MockAudioContext | MockOfflineAudioContext;
   public numberOfInputs: number = 1;
   public numberOfOutputs: number = 1;
   public channelCount: number = 2;
@@ -70,7 +70,7 @@ export class MockAudioNode {
   public channelInterpretation: ChannelInterpretation = 'speakers';
   private _connectedNodes: MockAudioNode[] = [];
 
-  constructor(context: MockAudioContext) {
+  constructor(context: MockAudioContext | MockOfflineAudioContext) {
     this.context = context;
   }
 
@@ -144,7 +144,7 @@ export class MockAudioParam {
 export class MockGainNode extends MockAudioNode {
   public gain: MockAudioParam;
 
-  constructor(context: MockAudioContext) {
+  constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
     this.gain = new MockAudioParam();
     this.gain.value = 1.0;
@@ -158,7 +158,7 @@ export class MockBiquadFilterNode extends MockAudioNode {
   public gain: MockAudioParam;
   public type: BiquadFilterType = 'lowpass';
 
-  constructor(context: MockAudioContext) {
+  constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
     this.frequency = new MockAudioParam();
     this.frequency.value = 350;
@@ -186,7 +186,7 @@ export class MockAudioBufferSourceNode extends MockAudioNode {
   public playbackRate: MockAudioParam;
   public onended: ((this: AudioBufferSourceNode, ev: Event) => any) | null = null;
 
-  constructor(context: MockAudioContext) {
+  constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
     this.detune = new MockAudioParam();
     this.playbackRate = new MockAudioParam();
@@ -212,7 +212,7 @@ export class MockAnalyserNode extends MockAudioNode {
   public maxDecibels: number = -30;
   public smoothingTimeConstant: number = 0.8;
 
-  constructor(context: MockAudioContext) {
+  constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
   }
 
@@ -246,7 +246,7 @@ export class MockAnalyserNode extends MockAudioNode {
 }
 
 // Mock OfflineAudioContext
-export class MockOfflineAudioContext extends MockAudioNode {
+export class MockOfflineAudioContext {
   public sampleRate: number;
   public currentTime: number = 0;
   public listener: any = {};
@@ -255,8 +255,6 @@ export class MockOfflineAudioContext extends MockAudioNode {
   public length: number;
 
   constructor(numberOfChannels: number, length: number, sampleRate: number) {
-    super(null as any);
-    this.context = this;
     this.sampleRate = sampleRate;
     this.length = length;
     this.destination = new MockAudioNode(this);

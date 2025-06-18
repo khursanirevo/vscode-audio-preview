@@ -183,19 +183,19 @@ export function delay(ms: number): Promise<void> {
 export function createMockFunction<T extends (...args: any[]) => any>(
   returnValue?: ReturnType<T>
 ): jest.MockedFunction<T> {
-  return jest.fn().mockReturnValue(returnValue) as jest.MockedFunction<T>;
+  return jest.fn().mockReturnValue(returnValue) as unknown as jest.MockedFunction<T>;
 }
 
 export function createMockAsyncFunction<T extends (...args: any[]) => Promise<any>>(
   resolveValue?: Awaited<ReturnType<T>>,
   rejectValue?: any
 ): jest.MockedFunction<T> {
-  const mockFn = jest.fn() as jest.MockedFunction<T>;
+  const mockFn = jest.fn() as unknown as jest.MockedFunction<T>;
   
   if (rejectValue !== undefined) {
     mockFn.mockRejectedValue(rejectValue);
   } else {
-    mockFn.mockResolvedValue(resolveValue);
+    mockFn.mockResolvedValue(resolveValue as any);
   }
   
   return mockFn;

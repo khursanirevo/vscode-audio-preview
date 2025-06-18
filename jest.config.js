@@ -29,8 +29,14 @@ module.exports = {
     "**/__tests__/**/*.(ts|tsx|js)",
     "**/*.(test|spec).(ts|tsx|js)"
   ],
+  testPathIgnorePatterns: [
+    "<rootDir>/__tests__/mocks/",
+    "<rootDir>/__tests__/utils/",
+    "<rootDir>/__tests__/setup.ts"
+  ],
   moduleNameMapper: {
     "\\.css$": "<rootDir>/__mocks__/styleMock.js",
-    "^@/(.*)$": "<rootDir>/$1"
+    "^@/(.*)$": "<rootDir>/$1",
+    "^vscode$": "<rootDir>/__tests__/mocks/vscode.ts"
   }
 };
