@@ -271,12 +271,12 @@ export const ViewColumn = vscode.ViewColumn;
 export const WebviewPanelTargetArea = vscode.WebviewPanelTargetArea;
 export const ConfigurationTarget = vscode.ConfigurationTarget;
 export const ExtensionMode = vscode.ExtensionMode;
-export const env = { uiKind: 1, remoteName: undefined }; // Mock env
+export const env = { uiKind: 1, remoteName: undefined as any }; // Mock env
 export const extensions = { getExtension: jest.fn() }; // Mock extensions
 
 // Add environment mock
 Object.assign(vscode, {
-  env: { uiKind: 1, remoteName: undefined },
+  env: { uiKind: 1, remoteName: undefined as any },
   extensions: { getExtension: jest.fn() }
 });
 
