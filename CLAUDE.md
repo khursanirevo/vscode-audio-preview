@@ -38,7 +38,7 @@ The decoder component requires Docker for building WebAssembly:
 
 ### Key Components
 - **Document Model**: AudioPreviewDocument handles file reading and watching
-- **Webview Communication**: Message passing between extension and webview via `src/message.ts`
+- **Webview Communication**: Type-safe message passing between extension and webview via `src/messageTypes.ts`
 - **Audio Processing**: WebAssembly decoder in `src/decoder/` for audio file processing
 - **UI Components**: React-based architecture in `src/webview/components/react/`
 
@@ -82,10 +82,23 @@ The webview uses a modern React architecture with:
 - **EasyCut.tsx**: Audio segment export functionality
 
 ### Message System
-- **ExtMessage**: Extension → Webview messages (CONFIG, DATA, RELOAD)
-- **WebviewMessage**: Webview → Extension messages (CONFIG request, DATA request, WRITE_WAV, ERROR)
-- Type-safe discriminated unions in `src/messageTypes.ts`
-- Migration utilities in `src/messageMigration.ts` for backward compatibility
+The extension uses a type-safe discriminated union message system defined in `src/messageTypes.ts`:
+
+#### Extension → Webview Messages (ExtMessage)
+- `'EXT_CONFIG'` - Send configuration to webview
+- `'EXT_DATA'` - Send audio data chunks
+- `'EXT_RELOAD'` - Trigger webview reload
+
+#### Webview → Extension Messages (WebviewMessage)
+- `'WV_CONFIG'` - Request configuration
+- `'WV_DATA'` - Request audio data chunk
+- `'WV_WRITE_WAV'` - Export audio file
+- `'WV_ERROR'` - Report error to extension
+
+#### Message Structure
+- All messages use `{ type: string, payload?: object }` format
+- Type guards available for safe message discrimination
+- `PostMessage` type for webview → extension communication
 
 ### Audio Processing Pipeline
 1. **File Loading**: Extension reads audio file as Uint8Array
@@ -111,5 +124,31 @@ Canvas components use React patterns:
 ### Type Safety
 - Comprehensive TypeScript throughout
 - Shared types in `src/webview/types/index.ts`
+- Message type definitions in `src/messageTypes.ts`
 - Interface definitions for all contexts and props
 - Strict ESLint configuration for code quality
+
+## Important Implementation Notes
+
+### WebAssembly Integration
+- Decoder module requires specific build process with Docker
+- WASM module exposes `getAudioInfo` and `decodeAudio` functions
+- File system operations through `module.FS` interface
+
+### React Context Hierarchy
+Provider nesting order is critical:
+```
+VSCodeProvider → PlayerSettingsProvider → AnalyzeSettingsProvider → AnalyzeProvider → PlayerProvider
+```
+
+### Canvas Performance
+- Canvas operations are expensive - minimize redraws
+- Use proper dependency arrays in useEffect hooks
+- Canvas refs must check for null before operations
+
+### Message Flow
+1. Webview requests config via `'WV_CONFIG'`
+2. Extension responds with `'EXT_CONFIG'` containing settings
+3. Webview requests data chunks via `'WV_DATA'`
+4. Extension streams data via multiple `'EXT_DATA'` messages
+5. User interactions trigger analysis and export operations
