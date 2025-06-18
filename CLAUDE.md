@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a VS Code extension called "audio-preview" that allows users to play and preview audio files directly in VS Code. It supports multiple audio formats (wav, mp3, aac, ogg, flac, opus, m4a, sph) and provides features like waveform visualization, spectrogram analysis, and audio playback controls.
 
+The extension uses a custom editor provider to handle audio files and renders a React-based webview UI for interaction. It includes advanced features like interactive graph selection (drag to analyze specific ranges), filter controls, and audio segment export functionality.
+
 ## Development Commands
 
 ### Build & Development
@@ -28,6 +30,11 @@ This is a VS Code extension called "audio-preview" that allows users to play and
 The decoder component requires Docker for building WebAssembly:
 1. `docker build -t audio-decoder ./src/decoder/`
 2. `docker run --rm -v ${pwd}/src/decoder:/build -it audio-decoder make`
+
+### Debugging & Development
+- Press F5 to launch extension in Extension Development Host
+- Use F12 or Shift+Ctrl+I to open VS Code DevTools for debugging webview issues
+- Extension logs appear in VS Code DevTools console
 
 ## Architecture
 
@@ -152,3 +159,25 @@ VSCodeProvider → PlayerSettingsProvider → AnalyzeSettingsProvider → Analyz
 3. Webview requests data chunks via `'WV_DATA'`
 4. Extension streams data via multiple `'EXT_DATA'` messages
 5. User interactions trigger analysis and export operations
+
+### Interactive Features
+- **Graph Selection**: Drag on waveform/spectrogram to analyze specific ranges
+  - Ctrl+drag: select time range only
+  - Shift+drag: select value range only
+- **Range Reset**: Right-click to return to original range
+  - Ctrl+right-click: reset time range only
+  - Shift+right-click: reset value range only
+- **Settings Tabs**: Player settings (filters), analyze settings (FFT, frequency scales), and EasyCut (export)
+
+### Extension Configuration
+The extension contributes these VS Code settings:
+- `WavPreview.autoAnalyze`: Automatically analyze when opening files
+- `WavPreview.playerDefault`: Default player settings (volume, filters)
+- `WavPreview.analyzeDefault`: Default analysis settings (visibility, FFT window size)
+
+### Disposable Pattern
+The codebase uses a unified disposable pattern with:
+- `IDisposable` interface for consistent resource cleanup
+- `Disposable` base class with automatic disposal tracking
+- `VSCodeDisposableAdapter` to bridge VS Code and custom disposables
+- All major components implement proper cleanup to prevent memory leaks
