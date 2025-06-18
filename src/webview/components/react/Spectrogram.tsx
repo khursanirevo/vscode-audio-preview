@@ -1,29 +1,24 @@
 import React, { useRef, useEffect } from 'react';
 import { useAnalyze } from '../../hooks/useAnalyze';
-import { 
-  AnalyzeSettingsProps, 
-  FrequencyScale 
-} from '../../contexts/AnalyzeSettingsContext';
+import { AnalyzeSettingsProps } from '../../contexts/AnalyzeSettingsContext';
+import { FrequencyScale } from '../../types';
 import '../../styles/figure.css';
 
 export interface SpectrogramProps {
-  width: number;
-  height: number;
-  settings: AnalyzeSettingsProps;
-  sampleRate: number;
-  audioBuffer: AudioBuffer;
-  ch: number;
-  numOfCh: number;
+  width?: number;
+  height?: number;
+  settings?: AnalyzeSettingsProps;
+  sampleRate?: number;
+  audioBuffer?: AudioBuffer;
+  ch?: number;
+  numOfCh?: number;
+  channelIndex: number;
+  numberOfChannels: number;
 }
 
 export function Spectrogram({
-  width,
-  height,
-  settings,
-  sampleRate,
-  audioBuffer,
-  ch,
-  numOfCh,
+  channelIndex,
+  numberOfChannels,
 }: SpectrogramProps) {
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const axisCanvasRef = useRef<HTMLCanvasElement>(null);

@@ -3,8 +3,8 @@ import { usePlayer } from '../../hooks/usePlayer';
 import { useAnalyze } from '../../hooks/useAnalyze';
 import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
 import { useVSCode } from '../../hooks/useVSCode';
-import { FrequencyScale } from '../../services/analyzeSettingsService';
-import AnalyzeService from '../../services/analyzeService';
+import { WindowSizeIndex, FrequencyScale } from '../../types';
+import { hzToMel, melToHz } from '../../utils/math';
 import './FigureInteraction.css';
 
 interface FigureInteractionProps {
@@ -138,9 +138,9 @@ export const FigureInteraction: React.FC<FigureInteractionProps> = ({
             newMaxFrequency = Math.pow(10, (1 - minY / rect.height) * logRange) + minFrequency;
             break;
           case FrequencyScale.Mel:
-            const melRange = AnalyzeService.hzToMel(maxFrequency) - AnalyzeService.hzToMel(minFrequency);
-            newMinFrequency = AnalyzeService.melToHz((1 - maxY / rect.height) * melRange) + minFrequency;
-            newMaxFrequency = AnalyzeService.melToHz((1 - minY / rect.height) * melRange) + minFrequency;
+            const melRange = hzToMel(maxFrequency) - hzToMel(minFrequency);
+            newMinFrequency = melToHz((1 - maxY / rect.height) * melRange) + minFrequency;
+            newMaxFrequency = melToHz((1 - minY / rect.height) * melRange) + minFrequency;
             break;
           default:
             newMinFrequency = (1 - maxY / rect.height) * frequencyRange + minFrequency;
@@ -193,15 +193,29 @@ export const FigureInteraction: React.FC<FigureInteractionProps> = ({
 
     // Right click - reset ranges
     if (event.button === 2) {
+      const defaultSetting = {
+        windowSizeIndex: WindowSizeIndex.W1024,
+        frequencyScale: FrequencyScale.Linear,
+        melFilterNum: 40,
+        minFrequency: 0,
+        maxFrequency: 22050,
+        waveformVisible: true,
+        spectrogramVisible: true,
+        autoAnalyze: false,
+        playerDefault: false,
+        analyzeDefault: false,
+        spectrogramAmplitudeRange: -90,
+      };
+      
       if (event.ctrlKey) {
         resetToDefaultTimeRange();
       } else if (event.shiftKey) {
-        resetToDefaultAmplitudeRange();
-        resetToDefaultFrequencyRange();
+        resetToDefaultAmplitudeRange(defaultSetting);
+        resetToDefaultFrequencyRange(defaultSetting);
       } else {
         resetToDefaultTimeRange();
-        resetToDefaultAmplitudeRange();
-        resetToDefaultFrequencyRange();
+        resetToDefaultAmplitudeRange(defaultSetting);
+        resetToDefaultFrequencyRange(defaultSetting);
       }
       analyze();
     }

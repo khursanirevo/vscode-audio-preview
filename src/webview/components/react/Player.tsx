@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { usePlayer } from '../../hooks/usePlayer';
 import { usePlayerSettings } from '../../hooks/usePlayerSettings';
-import '../player/playerComponent.css';
+import './Player.css';
 
 export function Player() {
   const player = usePlayer();
@@ -10,16 +10,16 @@ export function Player() {
 
   // Update volume display when settings change
   useEffect(() => {
-    if (playerSettings.state.volumeUnitDb) {
-      setDisplayVolume(playerSettings.state.initialVolumeDb.toFixed(1));
+    if (playerSettings.volumeUnitDb) {
+      setDisplayVolume(playerSettings.initialVolumeDb.toFixed(1));
     } else {
-      setDisplayVolume(playerSettings.state.initialVolume.toString());
+      setDisplayVolume(playerSettings.initialVolume.toString());
     }
-  }, [playerSettings.state.volumeUnitDb, playerSettings.state.initialVolumeDb, playerSettings.state.initialVolume]);
+  }, [playerSettings.volumeUnitDb, playerSettings.initialVolumeDb, playerSettings.initialVolume]);
 
   // Handle play/pause button click
   const handlePlayPause = useCallback(() => {
-    if (player.state.isPlaying) {
+    if (player.isPlaying) {
       player.pause();
     } else {
       player.play();
@@ -30,7 +30,7 @@ export function Player() {
   const handleVolumeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(event.target.value);
     
-    if (playerSettings.state.volumeUnitDb) {
+    if (playerSettings.volumeUnitDb) {
       // Convert dB setting to linear gain
       // -80 dB is treated as mute
       const voldb = value;
@@ -42,7 +42,7 @@ export function Player() {
       player.setVolume(value / 100);
       setDisplayVolume(value.toString());
     }
-  }, [player, playerSettings.state.volumeUnitDb]);
+  }, [player, playerSettings.volumeUnitDb]);
 
   // Handle seek bar input
   const handleSeekbarInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +54,7 @@ export function Player() {
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    if (!playerSettings.state.enableSpacekeyPlay) {
+    if (!playerSettings.enableSpacekeyPlay) {
       return undefined; // No cleanup needed
     }
 
@@ -70,18 +70,18 @@ export function Player() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [playerSettings.state.enableSpacekeyPlay, handlePlayPause]);
+  }, [playerSettings.enableSpacekeyPlay, handlePlayPause]);
 
   // Volume bar configuration
-  const volumeBarProps = playerSettings.state.volumeUnitDb
+  const volumeBarProps = playerSettings.volumeUnitDb
     ? {
-        value: playerSettings.state.initialVolumeDb,
+        value: playerSettings.initialVolumeDb,
         min: -80,
         max: 0,
         step: 0.5,
       }
     : {
-        value: playerSettings.state.initialVolume,
+        value: playerSettings.initialVolume,
         min: 0,
         max: 100,
         step: 1,
@@ -94,7 +94,7 @@ export function Player() {
         onClick={handlePlayPause}
         style={{ display: 'block' }}
       >
-        {player.state.isPlaying ? 'pause' : 'play'}
+        {player.isPlaying ? 'pause' : 'play'}
       </button>
 
       <div className="volumeText">
@@ -108,14 +108,14 @@ export function Player() {
       />
 
       <div className="seekPosText">
-        position {player.state.currentSec.toFixed(3)} s
+        position {player.currentSec.toFixed(3)} s
       </div>
       
       <div className="seekBarBox">
         <input
           type="range"
           className="seekBar"
-          value={player.state.seekbarValue}
+          value={player.seekbarValue}
           min={0}
           max={100}
           readOnly

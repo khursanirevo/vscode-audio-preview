@@ -1,5 +1,5 @@
 import React from 'react';
-import '../infoTable/infoTableComponent.css';
+import './InfoTable.css';
 
 export interface AudioInfo {
   numChannels: number;

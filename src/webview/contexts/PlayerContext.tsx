@@ -16,12 +16,13 @@ export type PlayerAction =
   | { type: 'UPDATE_SEEKBAR'; payload: { value: number; pos: number } }
   | { type: 'RESET' };
 
-export interface PlayerContextType {
-  state: PlayerState;
+export interface PlayerContextType extends PlayerState {
   play: () => void;
   pause: () => void;
   setVolume: (volume: number) => void;
   onSeekbarInput: (value: number) => void;
+  seekbarPercent: number;
+  setSeekbarPercent: (value: number) => void;
 }
 
 function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
@@ -158,15 +159,15 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     let lastNode = gainNodeRef.current;
 
     lpfNodeRef.current.disconnect();
-    if (playerSettings.state.enableLpf) {
-      lpfNodeRef.current.frequency.value = playerSettings.state.lpfFrequency;
+    if (playerSettings.enableLpf) {
+      lpfNodeRef.current.frequency.value = playerSettings.lpfFrequency;
       lpfNodeRef.current.connect(lastNode);
       lastNode = lpfNodeRef.current;
     }
 
     hpfNodeRef.current.disconnect();
-    if (playerSettings.state.enableHpf) {
-      hpfNodeRef.current.frequency.value = playerSettings.state.hpfFrequency;
+    if (playerSettings.enableHpf) {
+      hpfNodeRef.current.frequency.value = playerSettings.hpfFrequency;
       hpfNodeRef.current.connect(lastNode);
       lastNode = hpfNodeRef.current;
     }
@@ -188,10 +189,10 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     audioContext, 
     audioBuffer, 
     state.currentSec, 
-    playerSettings.state.enableHpf,
-    playerSettings.state.hpfFrequency,
-    playerSettings.state.enableLpf,
-    playerSettings.state.lpfFrequency,
+    playerSettings.enableHpf,
+    playerSettings.hpfFrequency,
+    playerSettings.enableLpf,
+    playerSettings.lpfFrequency,
     tick
   ]);
 
@@ -228,11 +229,11 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     dispatch({ type: 'SET_SEEKBAR_VALUE', payload: value });
 
     // Restart from selected position if needed
-    if (resumeRequired || playerSettings.state.enableSeekToPlay) {
+    if (resumeRequired || playerSettings.enableSeekToPlay) {
       // We need to delay the play call to allow state to update
       setTimeout(() => play(), 0);
     }
-  }, [audioBuffer, state.isPlaying, playerSettings.state.enableSeekToPlay, pause, play]);
+  }, [audioBuffer, state.isPlaying, playerSettings.enableSeekToPlay, pause, play]);
 
   // Handle filter setting changes
   useEffect(() => {
@@ -241,10 +242,10 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
       setTimeout(() => play(), 0);
     }
   }, [
-    playerSettings.state.enableHpf,
-    playerSettings.state.hpfFrequency,
-    playerSettings.state.enableLpf,
-    playerSettings.state.lpfFrequency,
+    playerSettings.enableHpf,
+    playerSettings.hpfFrequency,
+    playerSettings.enableLpf,
+    playerSettings.lpfFrequency,
   ]);
 
   // Cleanup on unmount
@@ -257,12 +258,18 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     };
   }, []);
 
+  const setSeekbarPercent = useCallback((value: number) => {
+    onSeekbarInput(value);
+  }, [onSeekbarInput]);
+
   const contextValue: PlayerContextType = {
-    state,
+    ...state,
     play,
     pause,
     setVolume,
     onSeekbarInput,
+    seekbarPercent: state.seekbarValue,
+    setSeekbarPercent,
   };
 
   return (

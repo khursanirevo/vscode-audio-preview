@@ -1,23 +1,7 @@
 import React, { createContext, useReducer, useCallback, ReactNode } from 'react';
 import { AnalyzeDefault } from '../../config';
 import { getRangeValues, getValueInEnum, getValueInRange } from '../../util';
-
-export enum WindowSizeIndex {
-  W256 = 0,
-  W512 = 1,
-  W1024 = 2,
-  W2048 = 3,
-  W4096 = 4,
-  W8192 = 5,
-  W16384 = 6,
-  W32768 = 7,
-}
-
-export enum FrequencyScale {
-  Linear = 0,
-  Log = 1,
-  Mel = 2,
-}
+import { WindowSizeIndex, FrequencyScale } from '../types';
 
 export interface AnalyzeSettingsState {
   sampleRate: number;
@@ -80,8 +64,7 @@ export type AnalyzeSettingsAction =
   | { type: 'RESET_TO_DEFAULT_FREQUENCY_RANGE'; payload: AnalyzeDefault }
   | { type: 'INITIALIZE_FROM_DEFAULT'; payload: { defaultSetting: AnalyzeDefault; audioBuffer: AudioBuffer } };
 
-export interface AnalyzeSettingsContextType {
-  state: AnalyzeSettingsState;
+export interface AnalyzeSettingsContextType extends AnalyzeSettingsState {
   setAutoCalcHopSize: (value: boolean) => void;
   setWaveformVisible: (value: boolean) => void;
   setWaveformVerticalScale: (value: number) => void;
@@ -160,7 +143,7 @@ function analyzeSettingsReducer(state: AnalyzeSettingsState, action: AnalyzeSett
     case 'SET_WINDOW_SIZE_INDEX':
       const windowSizeIndex = getValueInEnum(
         action.payload,
-        WindowSizeIndex,
+        WindowSizeIndex as any,
         WindowSizeIndex.W1024
       );
       const windowSize = 2 ** (windowSizeIndex + 8);
@@ -247,7 +230,7 @@ function analyzeSettingsReducer(state: AnalyzeSettingsState, action: AnalyzeSett
     case 'SET_FREQUENCY_SCALE':
       const frequencyScale = getValueInEnum(
         action.payload,
-        FrequencyScale,
+        FrequencyScale as any,
         FrequencyScale.Linear
       );
       return { ...state, frequencyScale };
@@ -292,7 +275,7 @@ function analyzeSettingsReducer(state: AnalyzeSettingsState, action: AnalyzeSett
       
       const newWindowSizeIndex = getValueInEnum(
         defaultSetting.windowSizeIndex,
-        WindowSizeIndex,
+        WindowSizeIndex as any,
         WindowSizeIndex.W1024
       );
       const newWindowSize = 2 ** (newWindowSizeIndex + 8);
@@ -321,7 +304,7 @@ function analyzeSettingsReducer(state: AnalyzeSettingsState, action: AnalyzeSett
         windowSize: newWindowSize,
         frequencyScale: getValueInEnum(
           defaultSetting.frequencyScale,
-          FrequencyScale,
+          FrequencyScale as any,
           FrequencyScale.Linear
         ),
         melFilterNum: getValueInRange(Math.trunc(defaultSetting.melFilterNum), 20, 200, 40),
@@ -474,7 +457,7 @@ export function AnalyzeSettingsProvider({ children }: AnalyzeSettingsProviderPro
   }, [state]);
 
   const contextValue: AnalyzeSettingsContextType = {
-    state,
+    ...state,
     setAutoCalcHopSize,
     setWaveformVisible,
     setWaveformVerticalScale,

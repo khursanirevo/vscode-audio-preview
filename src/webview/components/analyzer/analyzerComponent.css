@@ -1,9 +1,0 @@
-.analyzerComponent {
-  border: 1px solid var(--vscode-foreground);
-}
-
-.analyzeResultBox {
-  position: relative;
-  margin: 0.5em;
-  display: none;
-}

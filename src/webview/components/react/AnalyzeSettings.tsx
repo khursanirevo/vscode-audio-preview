@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
 import { useAnalyze } from '../../hooks/useAnalyze';
-import { FrequencyScale } from '../../services/analyzeSettingsService';
+import { FrequencyScale } from '../../types';
 import './AnalyzeSettings.css';
 
 const WINDOW_SIZE_OPTIONS = [

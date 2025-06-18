@@ -4,6 +4,7 @@ import { AnalyzeSettingsProps } from './AnalyzeSettingsContext';
 
 export interface AnalyzeContextType {
   isAnalyzing: boolean;
+  lastAnalyzeTime: number | null;
   analyze: () => void;
   getSpectrogram: (ch: number, settings: AnalyzeSettingsProps, audioBuffer: AudioBuffer) => number[][];
   getMelSpectrogram: (ch: number, settings: AnalyzeSettingsProps, audioBuffer: AudioBuffer) => number[][];
@@ -23,6 +24,7 @@ export interface AnalyzeProviderProps {
 
 export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lastAnalyzeTime, setLastAnalyzeTime] = useState<number | null>(null);
 
   // Round input value to the nearest nice number
   const roundToNearestNiceNumber = useCallback((input: number): [number, number] => {
@@ -144,7 +146,10 @@ export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
   const analyze = useCallback(() => {
     setIsAnalyzing(true);
     // The actual analysis is performed by components that use this context
-    setTimeout(() => setIsAnalyzing(false), 100);
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      setLastAnalyzeTime(Date.now());
+    }, 100);
   }, []);
 
   // Get spectrogram
@@ -304,6 +309,7 @@ export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
 
   const contextValue: AnalyzeContextType = {
     isAnalyzing,
+    lastAnalyzeTime,
     analyze,
     getSpectrogram,
     getMelSpectrogram,

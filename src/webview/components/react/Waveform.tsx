@@ -4,23 +4,20 @@ import { AnalyzeSettingsProps } from '../../contexts/AnalyzeSettingsContext';
 import '../../styles/figure.css';
 
 export interface WaveformProps {
-  width: number;
-  height: number;
-  settings: AnalyzeSettingsProps;
-  sampleRate: number;
-  channelData: Float32Array;
-  ch: number;
-  numOfCh: number;
+  width?: number;
+  height?: number;
+  settings?: AnalyzeSettingsProps;
+  sampleRate?: number;
+  channelData?: Float32Array;
+  ch?: number;
+  numOfCh?: number;
+  channelIndex: number;
+  numberOfChannels: number;
 }
 
 export function Waveform({
-  width,
-  height,
-  settings,
-  sampleRate,
-  channelData,
-  ch,
-  numOfCh,
+  channelIndex,
+  numberOfChannels,
 }: WaveformProps) {
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const axisCanvasRef = useRef<HTMLCanvasElement>(null);

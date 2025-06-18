@@ -2,6 +2,8 @@ import React, { createContext, useCallback, useEffect, useState, ReactNode } fro
 import { ExtMessage, ExtMessageType, WebviewMessage, WebviewMessageType, PostMessage } from '../../message';
 import { Config } from '../../config';
 import { EventType } from '../events';
+import createDecoder from '../decoder';
+import createAudioContext from '../createAudioContext';
 
 export interface vscode {
   postMessage(message: WebviewMessage): void;
@@ -13,6 +15,7 @@ export interface VSCodeContextType {
   postMessage: PostMessage;
   config: Config | null;
   fileData: Uint8Array | null;
+  audioBuffer: AudioBuffer | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -28,6 +31,7 @@ export interface VSCodeProviderProps {
 export function VSCodeProvider({ children }: VSCodeProviderProps) {
   const [config, setConfig] = useState<Config | null>(null);
   const [fileData, setFileData] = useState<Uint8Array | null>(null);
+  const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,10 +118,57 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
     };
   }, [handleMessage, postMessage]);
 
+  // Process file data to create audio buffer
+  useEffect(() => {
+    if (!fileData || isLoading) return;
+
+    async function processAudio() {
+      try {
+        console.log('Creating decoder...');
+        const decoder = await createDecoder(fileData);
+
+        // Read header info
+        console.log('Reading audio info...');
+        decoder.readAudioInfo();
+
+        // Decode audio
+        console.log('Decoding audio...');
+        decoder.decode();
+
+        // Create audio context and buffer
+        console.log('Creating audio context and buffer...');
+        const context = createAudioContext(decoder.sampleRate);
+        const buffer = context.createBuffer(
+          decoder.numChannels,
+          decoder.length,
+          decoder.sampleRate
+        );
+
+        // Copy decoded samples to audio buffer
+        for (let ch = 0; ch < decoder.numChannels; ch++) {
+          const samples = Float32Array.from(decoder.samples[ch]);
+          buffer.copyToChannel(samples, ch);
+        }
+
+        setAudioBuffer(buffer);
+
+        // Clean up decoder
+        decoder.dispose();
+        console.log('Audio processing complete');
+      } catch (err) {
+        console.error('Error processing audio:', err);
+        setError(`Error processing audio: ${err}`);
+      }
+    }
+
+    processAudio();
+  }, [fileData, isLoading]);
+
   const contextValue: VSCodeContextType = {
     postMessage,
     config,
     fileData,
+    audioBuffer,
     isLoading,
     error,
   };

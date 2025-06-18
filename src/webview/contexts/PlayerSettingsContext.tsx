@@ -30,8 +30,7 @@ export type PlayerSettingsAction =
   | { type: 'SET_MATCH_FILTER_FREQUENCY_TO_SPECTROGRAM'; payload: boolean }
   | { type: 'INITIALIZE_FROM_DEFAULT'; payload: { defaultSetting: PlayerDefault; audioBuffer: AudioBuffer } };
 
-export interface PlayerSettingsContextType {
-  state: PlayerSettingsState;
+export interface PlayerSettingsContextType extends PlayerSettingsState {
   setVolumeUnitDb: (value: boolean) => void;
   setInitialVolumeDb: (value: number) => void;
   setInitialVolume: (value: number) => void;
@@ -233,7 +232,7 @@ export function PlayerSettingsProvider({ children }: PlayerSettingsProviderProps
   }, []);
 
   const contextValue: PlayerSettingsContextType = {
-    state,
+    ...state,
     setVolumeUnitDb,
     setInitialVolumeDb,
     setInitialVolume,
