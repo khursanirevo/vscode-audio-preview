@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { usePlayerSettings } from '../../hooks/usePlayerSettings';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { PlayerProvider } from '../../contexts/PlayerContext';
+import { usePlayerSettings } from '../hooks/usePlayerSettings';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { PlayerProvider } from '../contexts/PlayerContext';
 import { InfoTable, AudioInfo } from './InfoTable';
 import { Player } from './Player';
-import { Config } from '../../../config';
+import { Config } from '../../config';
 
 interface WebViewInnerProps {
   config: Config;

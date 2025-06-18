@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useVSCode } from '../../hooks/useVSCode';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useVSCode } from '../hooks/useVSCode';
 // No longer need to import WebviewMessageType
-import { encodeToWav } from '../../encoder';
+import { encodeToWav } from '../encoder';
 import './EasyCut.css';
 
 export const EasyCut: React.FC = () => {

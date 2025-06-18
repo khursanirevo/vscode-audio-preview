@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { usePlayer } from '../../hooks/usePlayer';
-import { usePlayerSettings } from '../../hooks/usePlayerSettings';
+import { usePlayer } from '../hooks/usePlayer';
+import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import './Player.css';
 
 export function Player() {

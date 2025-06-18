@@ -1,10 +1,10 @@
 import React, { useRef, useEffect } from 'react';
-import { useAnalyze } from '../../hooks/useAnalyze';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useVSCode } from '../../hooks/useVSCode';
-import { FrequencyScale, canvasSizes } from '../../types';
-import { AnalyzeSettingsProps } from '../../contexts/AnalyzeSettingsContext';
-import '../../styles/figure.css';
+import { useAnalyze } from '../hooks/useAnalyze';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useVSCode } from '../hooks/useVSCode';
+import { FrequencyScale, canvasSizes } from '../types';
+import { AnalyzeSettingsProps } from '../contexts/AnalyzeSettingsContext';
+import '../styles/figure.css';
 
 export interface SpectrogramProps {
   channelIndex: number;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAnalyze } from '../../hooks/useAnalyze';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useVSCode } from '../../hooks/useVSCode';
+import { useAnalyze } from '../hooks/useAnalyze';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useVSCode } from '../hooks/useVSCode';
 import { Waveform } from './Waveform';
 import { Spectrogram } from './Spectrogram';
 import './Analyzer.css';

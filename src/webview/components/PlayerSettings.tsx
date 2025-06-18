@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { usePlayerSettings } from '../../hooks/usePlayerSettings';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useAnalyze } from '../../hooks/useAnalyze';
+import { usePlayerSettings } from '../hooks/usePlayerSettings';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useAnalyze } from '../hooks/useAnalyze';
 import './PlayerSettings.css';
 
 export const PlayerSettings: React.FC = () => {

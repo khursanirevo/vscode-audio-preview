@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { VSCodeProvider } from '../../contexts/VSCodeContext';
-import { useVSCode } from '../../hooks/useVSCode';
-import { PlayerSettingsProvider } from '../../contexts/PlayerSettingsContext';
-import { PlayerProvider } from '../../contexts/PlayerContext';
-import { AnalyzeSettingsProvider } from '../../contexts/AnalyzeSettingsContext';
-import { AnalyzeProvider } from '../../contexts/AnalyzeContext';
+import { VSCodeProvider } from '../contexts/VSCodeContext';
+import { useVSCode } from '../hooks/useVSCode';
+import { PlayerSettingsProvider } from '../contexts/PlayerSettingsContext';
+import { PlayerProvider } from '../contexts/PlayerContext';
+import { AnalyzeSettingsProvider } from '../contexts/AnalyzeSettingsContext';
+import { AnalyzeProvider } from '../contexts/AnalyzeContext';
 import { AudioInfo } from './InfoTable';
 import { WebViewInner } from './WebViewInner';
-import Decoder from '../../decoder';
+import Decoder from '../decoder';
 
 interface WebViewAppProps {
   createAudioContext: (sampleRate: number) => AudioContext;

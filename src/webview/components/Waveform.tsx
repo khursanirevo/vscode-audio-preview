@@ -1,9 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { useAnalyze } from '../../hooks/useAnalyze';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useVSCode } from '../../hooks/useVSCode';
-import { canvasSizes } from '../../types';
-import '../../styles/figure.css';
+import { useAnalyze } from '../hooks/useAnalyze';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useVSCode } from '../hooks/useVSCode';
+import { canvasSizes } from '../types';
+import '../styles/figure.css';
 
 export interface WaveformProps {
   channelIndex: number;

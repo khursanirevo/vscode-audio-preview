@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { usePlayer } from '../../hooks/usePlayer';
-import { useAnalyze } from '../../hooks/useAnalyze';
-import { useAnalyzeSettings } from '../../hooks/useAnalyzeSettings';
-import { useVSCode } from '../../hooks/useVSCode';
-import { WindowSizeIndex, FrequencyScale } from '../../types';
-import { hzToMel, melToHz } from '../../utils/math';
+import { usePlayer } from '../hooks/usePlayer';
+import { useAnalyze } from '../hooks/useAnalyze';
+import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { useVSCode } from '../hooks/useVSCode';
+import { WindowSizeIndex, FrequencyScale } from '../types';
+import { hzToMel, melToHz } from '../utils/math';
 import './FigureInteraction.css';
 
 interface FigureInteractionProps {
