@@ -7,10 +7,10 @@ import type { ExtMessage, WebviewMessage } from '../../messageTypes';
 // Mock message posting functionality
 export class MockWebviewMessageHandler {
   private messageListeners: ((message: any) => void)[] = [];
-  private sentMessages: ExtMessage[] = [];
+  private sentMessages: WebviewMessage[] = [];
 
   // Mock the webview's postMessage function
-  postMessage = jest.fn((message: ExtMessage) => {
+  postMessage = jest.fn((message: WebviewMessage) => {
     this.sentMessages.push(message);
     // Simulate async message delivery
     setTimeout(() => {
@@ -38,16 +38,16 @@ export class MockWebviewMessageHandler {
   }
 
   // Test helpers
-  getSentMessages(): ExtMessage[] {
+  getSentMessages(): WebviewMessage[] {
     return [...this.sentMessages];
   }
 
-  getLastSentMessage(): ExtMessage | undefined {
+  getLastSentMessage(): WebviewMessage | undefined {
     return this.sentMessages[this.sentMessages.length - 1];
   }
 
-  getSentMessagesByType<T extends ExtMessage['type']>(type: T): Extract<ExtMessage, { type: T }>[] {
-    return this.sentMessages.filter(msg => msg.type === type) as Extract<ExtMessage, { type: T }>[];
+  getSentMessagesByType<T extends WebviewMessage['type']>(type: T): Extract<WebviewMessage, { type: T }>[] {
+    return this.sentMessages.filter(msg => msg.type === type) as Extract<WebviewMessage, { type: T }>[];
   }
 
   clearSentMessages() {

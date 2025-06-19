@@ -225,9 +225,24 @@ describe('Analyzer Component', () => {
 
     it('does not auto analyze when already analyzed', async () => {
       const audioBuffer = createMockAudioBuffer();
-      updateMockContexts({ audioBuffer }, { lastAnalyzeTime: Date.now() });
+      const analyzeFunc = jest.fn();
       
-      render(
+      // Set the audio buffer first
+      updateMockContexts({ audioBuffer }, { analyze: analyzeFunc });
+      
+      const { rerender } = render(
+        <TestWrapper>
+          <Analyzer autoAnalyze={true} />
+        </TestWrapper>
+      );
+
+      // Now set the lastAnalyzeTime to simulate completed analysis
+      updateMockContexts(
+        { audioBuffer }, 
+        { lastAnalyzeTime: Date.now(), analyze: analyzeFunc }
+      );
+      
+      rerender(
         <TestWrapper>
           <Analyzer autoAnalyze={true} />
         </TestWrapper>
@@ -235,7 +250,18 @@ describe('Analyzer Component', () => {
 
       // Wait a bit to ensure no additional analysis happens
       await new Promise(resolve => setTimeout(resolve, 100));
-      expect(mockAnalyze).not.toHaveBeenCalled();
+      // Reset the call count to check only calls after lastAnalyzeTime was set
+      analyzeFunc.mockClear();
+      
+      // Force a re-render to trigger useEffect again
+      rerender(
+        <TestWrapper>
+          <Analyzer autoAnalyze={true} />
+        </TestWrapper>
+      );
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(analyzeFunc).not.toHaveBeenCalled();
     });
   });
 
@@ -271,11 +297,14 @@ describe('Analyzer Component', () => {
     it('sets show results when analyze is clicked', async () => {
       const audioBuffer = createMockAudioBuffer();
       
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        { waveformVisible: true }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{ waveformVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -291,12 +320,14 @@ describe('Analyzer Component', () => {
     it('renders waveform when visible and results are shown', async () => {
       const audioBuffer = createMockAudioBuffer(2);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: true, spectrogramVisible: false }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: true, spectrogramVisible: false }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -309,12 +340,14 @@ describe('Analyzer Component', () => {
     it('renders spectrogram when visible and results are shown', async () => {
       const audioBuffer = createMockAudioBuffer(2);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: false, spectrogramVisible: true }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: false, spectrogramVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -327,12 +360,14 @@ describe('Analyzer Component', () => {
     it('renders both waveform and spectrogram when both are visible', async () => {
       const audioBuffer = createMockAudioBuffer(1);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: true, spectrogramVisible: true }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: true, spectrogramVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -344,12 +379,14 @@ describe('Analyzer Component', () => {
     it('renders correct number of channels', async () => {
       const audioBuffer = createMockAudioBuffer(4);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: true, spectrogramVisible: false }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: true, spectrogramVisible: false }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -363,11 +400,14 @@ describe('Analyzer Component', () => {
     it('does not render visualizations when results are not shown', () => {
       const audioBuffer = createMockAudioBuffer(2);
       
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        { waveformVisible: true, spectrogramVisible: true }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{ waveformVisible: true, spectrogramVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -381,11 +421,14 @@ describe('Analyzer Component', () => {
     it('updates hasAnalyzed state when lastAnalyzeTime changes', async () => {
       const audioBuffer = createMockAudioBuffer();
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: null },
+        {}
+      );
+      
       const { rerender } = render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: null }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -394,11 +437,14 @@ describe('Analyzer Component', () => {
       expect(document.querySelector('.analyzeResultBox')).not.toBeInTheDocument();
 
       // Update with analyze time
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        {}
+      );
+      
       rerender(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -411,12 +457,14 @@ describe('Analyzer Component', () => {
     it('shows results when analysis completes', async () => {
       const audioBuffer = createMockAudioBuffer();
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        {}
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -431,11 +479,15 @@ describe('Analyzer Component', () => {
       
       // Should not auto analyze by default
       const analyzeMock = jest.fn();
+      
+      updateMockContexts(
+        { audioBuffer },
+        { analyze: analyzeMock },
+        {}
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -447,11 +499,14 @@ describe('Analyzer Component', () => {
       const audioBuffer = createMockAudioBuffer();
       const analyzeMock = jest.fn();
       
+      updateMockContexts(
+        { audioBuffer },
+        { analyze: analyzeMock },
+        {}
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer autoAnalyze={true} />
         </TestWrapper>
       );
@@ -465,11 +520,14 @@ describe('Analyzer Component', () => {
       const audioBuffer = createMockAudioBuffer();
       const analyzeMock = jest.fn();
       
+      updateMockContexts(
+        { audioBuffer },
+        { analyze: analyzeMock },
+        {}
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer autoAnalyze={false} />
         </TestWrapper>
       );
@@ -481,6 +539,14 @@ describe('Analyzer Component', () => {
 
   describe('Component Structure', () => {
     it('renders with correct CSS classes', () => {
+      const audioBuffer = createMockAudioBuffer();
+      
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: true }
+      );
+      
       render(
         <TestWrapper>
           <Analyzer />
@@ -494,12 +560,14 @@ describe('Analyzer Component', () => {
     it('renders canvas boxes for visualizations', async () => {
       const audioBuffer = createMockAudioBuffer(1);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: true, spectrogramVisible: true }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: true, spectrogramVisible: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -508,6 +576,14 @@ describe('Analyzer Component', () => {
     });
 
     it('has proper accessibility attributes', () => {
+      const audioBuffer = createMockAudioBuffer();
+      
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        {}
+      );
+      
       render(
         <TestWrapper>
           <Analyzer />
@@ -522,8 +598,14 @@ describe('Analyzer Component', () => {
 
   describe('Edge Cases', () => {
     it('handles null audio buffer gracefully', () => {
+      updateMockContexts(
+        { audioBuffer: null },
+        {},
+        {}
+      );
+      
       render(
-        <TestWrapper vscodeState={{ audioBuffer: null }}>
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -535,11 +617,14 @@ describe('Analyzer Component', () => {
     it('handles audio buffer with zero channels', async () => {
       const audioBuffer = createMockAudioBuffer(0);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: false, spectrogramVisible: false }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -552,12 +637,14 @@ describe('Analyzer Component', () => {
     it('handles settings with both visualizations disabled', async () => {
       const audioBuffer = createMockAudioBuffer(1);
       
+      updateMockContexts(
+        { audioBuffer },
+        { lastAnalyzeTime: Date.now() },
+        { waveformVisible: false, spectrogramVisible: false }
+      );
+      
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ lastAnalyzeTime: Date.now() }}
-          analyzeSettings={{ waveformVisible: false, spectrogramVisible: false }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );

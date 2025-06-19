@@ -11,11 +11,17 @@ import { EventType } from '../events';
 
 // Mock decoder
 jest.mock('../decoder', () => ({
-  create: jest.fn(),
+  __esModule: true,
+  default: {
+    create: jest.fn(),
+  },
 }));
 
 // Mock createAudioContext
-jest.mock('../createAudioContext', () => jest.fn());
+jest.mock('../createAudioContext', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 // Mock acquireVsCodeApi
 const mockVSCodeAPI = createMockVSCodeAPI();
@@ -217,10 +223,14 @@ describe('VSCodeContext', () => {
       });
 
       // Should request next chunk
-      const sentMessages = mockVSCodeAPI.__getSentMessages();
-      expect(sentMessages[sentMessages.length - 1]).toEqual({
-        type: 'WV_DATA',
-        payload: { start: 2, end: 3000002 }
+      await waitFor(() => {
+        const sentMessages = mockVSCodeAPI.__getSentMessages();
+        const dataMessages = sentMessages.filter(msg => msg.type === 'WV_DATA');
+        expect(dataMessages.length).toBeGreaterThan(0);
+        expect(dataMessages[dataMessages.length - 1]).toEqual({
+          type: 'WV_DATA',
+          payload: { start: 2, end: 3000002 }
+        });
       });
 
       // Second chunk
@@ -326,8 +336,11 @@ describe('VSCodeContext', () => {
         }))
       };
 
-      require('../decoder').create.mockResolvedValue(mockDecoder);
-      require('../createAudioContext').default.mockReturnValue(mockContext);
+      const MockDecoder = require('../decoder').default;
+      const mockCreateAudioContext = require('../createAudioContext').default as jest.MockedFunction<typeof import('../createAudioContext').default>;
+      
+      MockDecoder.create.mockResolvedValue(mockDecoder);
+      mockCreateAudioContext.mockReturnValue(mockContext as any);
     });
 
     it('should process audio when file data is available', async () => {
@@ -356,13 +369,16 @@ describe('VSCodeContext', () => {
         expect(screen.getByTestId('audio-buffer')).toHaveTextContent('has-buffer');
       });
 
-      expect(require('../decoder').create).toHaveBeenCalled();
-      expect(require('../createAudioContext').default).toHaveBeenCalled();
+      const MockDecoder = require('../decoder').default;
+      const mockCreateAudioContext = require('../createAudioContext').default;
+      expect(MockDecoder.create).toHaveBeenCalled();
+      expect(mockCreateAudioContext).toHaveBeenCalled();
     });
 
     it('should handle audio processing errors', async () => {
       const error = new Error('Decoding failed');
-      require('../decoder').create.mockRejectedValue(error);
+      const MockDecoder = require('../decoder').default;
+      MockDecoder.create.mockRejectedValue(error);
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
@@ -420,7 +436,8 @@ describe('VSCodeContext', () => {
       // Wait a bit to ensure no processing occurs
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      expect(require('../decoder').create).not.toHaveBeenCalled();
+      const MockDecoder = require('../decoder').default;
+      expect(MockDecoder.create).not.toHaveBeenCalled();
       expect(screen.getByTestId('loading')).toHaveTextContent('loading');
     });
   });
