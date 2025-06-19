@@ -11,6 +11,16 @@ export interface vscode {
 
 declare function acquireVsCodeApi(): vscode;
 
+// Global variable to ensure VS Code API is only acquired once
+let vscodeApiInstance: vscode | null = null;
+
+function getVSCodeApi(): vscode {
+  if (!vscodeApiInstance) {
+    vscodeApiInstance = acquireVsCodeApi();
+  }
+  return vscodeApiInstance;
+}
+
 export interface VSCodeContextType {
   postMessage: PostMessage;
   config: Config | null;
@@ -36,7 +46,7 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Initialize VS Code API only once
-  const [vscode] = useState(() => acquireVsCodeApi());
+  const [vscode] = useState(() => getVSCodeApi());
 
   const postMessage = useCallback<PostMessage>((message: WebviewMessage) => {
     vscode.postMessage(message);
