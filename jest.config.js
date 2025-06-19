@@ -5,7 +5,9 @@ module.exports = {
   setupFiles: ["jest-canvas-mock"],
   setupFilesAfterEnv: ["<rootDir>/__tests__/setup.ts"],
   transform: {
-    "^.+\\.(ts|tsx)$": "ts-jest",
+    "^.+\\.(ts|tsx)$": ["ts-jest", {
+      tsconfig: "tsconfig.test.json"
+    }],
   },
   collectCoverageFrom: [
     "**/*.{ts,tsx}",

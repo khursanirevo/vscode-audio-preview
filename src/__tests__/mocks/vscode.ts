@@ -144,6 +144,7 @@ const mockWorkspace = {
 // Mock window
 const mockWindow = {
   createWebviewPanel: jest.fn(createMockWebviewPanel),
+  registerCustomEditorProvider: jest.fn(() => ({ dispose: jest.fn() })),
   showErrorMessage: jest.fn(),
   showWarningMessage: jest.fn(),
   showInformationMessage: jest.fn(),
@@ -214,8 +215,8 @@ const createMockCustomDocument = (uri: any, mockData?: Uint8Array) => ({
   _mockData: mockData || new Uint8Array([1, 2, 3, 4])
 });
 
-// Export all mocks
-export const vscode = {
+// Create the main vscode mock object
+const vscode = {
   Uri: mockUri,
   Disposable: mockDisposable,
   workspace: mockWorkspace,
@@ -249,6 +250,17 @@ export const vscode = {
     Test: 3
   },
 
+  ExtensionKind: {
+    UI: 1,
+    Workspace: 2,
+    UIAndWorkspace: 3
+  },
+
+  UIKind: {
+    Desktop: 1,
+    Web: 2
+  },
+
   // Test helpers
   __createMockExtensionContext: createMockExtensionContext,
   __createMockWebviewPanel: createMockWebviewPanel,
@@ -271,8 +283,17 @@ export const ViewColumn = vscode.ViewColumn;
 export const WebviewPanelTargetArea = vscode.WebviewPanelTargetArea;
 export const ConfigurationTarget = vscode.ConfigurationTarget;
 export const ExtensionMode = vscode.ExtensionMode;
+export const ExtensionKind = vscode.ExtensionKind;
+export const UIKind = vscode.UIKind;
 export const env = { uiKind: 1, remoteName: undefined as any }; // Mock env
 export const extensions = { getExtension: jest.fn() }; // Mock extensions
+
+// Export test helpers
+export const __createMockExtensionContext = vscode.__createMockExtensionContext;
+export const __createMockWebviewPanel = vscode.__createMockWebviewPanel;
+export const __createMockTextDocument = vscode.__createMockTextDocument;
+export const __createMockCustomDocument = vscode.__createMockCustomDocument;
+export const __resetAllMocks = vscode.__resetAllMocks;
 
 // Add environment mock
 Object.assign(vscode, {

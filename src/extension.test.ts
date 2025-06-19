@@ -65,7 +65,7 @@ describe('Extension Activation', () => {
       expect(console.log).toHaveBeenCalledWith('version', '1.0.0');
       expect(console.log).toHaveBeenCalledWith('extension.extensionKind', vscode.ExtensionKind.Workspace);
       expect(console.log).toHaveBeenCalledWith('vscode.env.uiKind', expect.any(Number));
-      expect(console.log).toHaveBeenCalledWith('vscode.env.remoteName', expect.anything());
+      expect(console.log).toHaveBeenCalledWith('vscode.env.remoteName', undefined);
     });
 
     it('should register AudioPreviewEditorProvider', () => {
@@ -177,6 +177,11 @@ describe('Extension Activation', () => {
   });
 
   describe('Extension Metadata Validation', () => {
+    beforeEach(() => {
+      // Reset the mock to its default behavior
+      (AudioPreviewEditorProvider.register as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    });
+
     it('should validate extension ID correctly', () => {
       activate(mockContext);
       

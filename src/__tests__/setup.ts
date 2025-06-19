@@ -3,6 +3,7 @@
  */
 
 import 'jest-canvas-mock';
+import '@testing-library/jest-dom';
 import { setupAudioContextMocks } from './mocks/audioContext';
 import './mocks/vscode';
 

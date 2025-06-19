@@ -67,36 +67,49 @@ describe('Disposable Pattern', () => {
     });
 
     it('should handle array with null/undefined items', () => {
+      const dispose1 = jest.fn();
+      const dispose2 = jest.fn();
+      const dispose3 = jest.fn();
+      
       const disposables: (IDisposable | null | undefined)[] = [
-        { dispose: jest.fn() },
+        { dispose: dispose1 },
         null,
-        { dispose: jest.fn() },
+        { dispose: dispose2 },
         undefined,
-        { dispose: jest.fn() }
+        { dispose: dispose3 }
       ];
 
       // Cast to avoid TypeScript error for test purposes
       expect(() => disposeAll(disposables as IDisposable[])).not.toThrow();
       
       // Should only call dispose on valid items
-      expect((disposables[0] as IDisposable).dispose).toHaveBeenCalled();
-      expect((disposables[2] as IDisposable).dispose).toHaveBeenCalled();
-      expect((disposables[4] as IDisposable).dispose).toHaveBeenCalled();
+      expect(dispose1).toHaveBeenCalled();
+      expect(dispose2).toHaveBeenCalled();
+      expect(dispose3).toHaveBeenCalled();
+      
+      // Array should be empty after disposal
+      expect(disposables.length).toBe(0);
     });
 
     it('should handle dispose errors gracefully', () => {
+      const dispose1 = jest.fn();
+      const dispose2 = jest.fn(() => { throw new Error('Dispose error'); });
+      const dispose3 = jest.fn();
+      
       const disposables: IDisposable[] = [
-        { dispose: jest.fn() },
-        { dispose: jest.fn(() => { throw new Error('Dispose error'); }) },
-        { dispose: jest.fn() }
+        { dispose: dispose1 },
+        { dispose: dispose2 },
+        { dispose: dispose3 }
       ];
 
-      // Should not throw even if one dispose fails
-      expect(() => disposeAll(disposables)).toThrow();
+      // disposeAll doesn't catch errors, so it will throw
+      expect(() => disposeAll(disposables)).toThrow('Dispose error');
       
-      // First disposable should have been called
-      expect(disposables[0].dispose).toHaveBeenCalled();
-      // Error thrown by second disposable should prevent third from being called
+      // Because of LIFO order, dispose3 is called first, then dispose2 throws
+      expect(dispose3).toHaveBeenCalled();
+      expect(dispose2).toHaveBeenCalled();
+      // dispose1 won't be called because dispose2 threw an error
+      expect(dispose1).not.toHaveBeenCalled();
     });
 
     it('should dispose in reverse order (LIFO)', () => {
@@ -131,7 +144,9 @@ describe('Disposable Pattern', () => {
       }
 
       public dispose(): void {
-        this.customCleanup();
+        if (!this._isDisposed) {
+          this.customCleanup();
+        }
         super.dispose();
       }
     }
@@ -268,8 +283,12 @@ describe('Disposable Pattern', () => {
     });
 
     it('should be abstract class', () => {
-      // Cannot instantiate abstract Disposable directly
-      expect(() => new (Disposable as any)()).toThrow();
+      // TypeScript ensures at compile time that abstract classes cannot be instantiated
+      // At runtime, we can verify that it's meant to be extended
+      const instance = new (Disposable as any)();
+      expect(instance).toBeInstanceOf(Disposable);
+      expect(instance._isDisposed).toBe(false);
+      expect(instance._disposables).toEqual([]);
     });
   });
 
@@ -290,7 +309,9 @@ describe('Disposable Pattern', () => {
       }
 
       public dispose(): void {
-        this.customCleanup();
+        if (!this._isDisposed) {
+          this.customCleanup();
+        }
         super.dispose();
       }
     }
@@ -344,7 +365,9 @@ describe('Disposable Pattern', () => {
       }
 
       public dispose(): void {
-        this.customCleanup();
+        if (!this._isDisposed) {
+          this.customCleanup();
+        }
         super.dispose();
       }
     }

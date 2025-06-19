@@ -134,6 +134,10 @@ describe('AudioPreviewEditor', () => {
     });
 
     it('should handle missing context gracefully', () => {
+      // Reset the mock to normal behavior
+      const mockDisposable = { dispose: jest.fn() };
+      (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(mockDisposable);
+      
       const nullContext = null as any;
       
       expect(() => AudioPreviewEditorProvider.register(nullContext)).not.toThrow();

@@ -322,8 +322,9 @@ export class MockAudioContext extends MockOfflineAudioContext {
   public baseLatency: number = 0.01;
   public outputLatency: number = 0.05;
 
-  constructor() {
-    super(2, 44100, 44100);
+  constructor(options?: AudioContextOptions) {
+    const sampleRate = options?.sampleRate || 44100;
+    super(2, 44100, sampleRate);
   }
 
   getOutputTimestamp(): AudioTimestamp {

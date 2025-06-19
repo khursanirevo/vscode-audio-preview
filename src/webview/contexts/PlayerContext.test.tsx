@@ -3,19 +3,18 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { PlayerContext, PlayerProvider } from './PlayerContext';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import { usePlayer } from '../hooks/usePlayer';
-import { mockAudioContext, mockAudioNode, mockAudioBuffer, mockGainNode } from '../../__tests__/mocks/audioContext';
+import { mockAudioContext, mockAudioNode, mockAudioBuffer, mockGainNode, mockAudioBufferSourceNode, mockBiquadFilterNode } from '../../__tests__/mocks/audioContext';
 
 // Mock dependencies
 jest.mock('../hooks/usePlayerSettings');
 
 describe('PlayerContext', () => {
-  const mockAudioContextInstance = mockAudioContext();
+  const mockAudioContextInstance = mockAudioContext() as any;
   const mockAudioBufferInstance = mockAudioBuffer({
-    duration: 10,
     sampleRate: 44100,
     numberOfChannels: 2,
     length: 441000,
-  });
+  }) as any;
 
   const mockPlayerSettings = {
     enableHpf: false,
@@ -71,7 +70,10 @@ describe('PlayerContext', () => {
 
   describe('Audio Playback', () => {
     it('should play audio', () => {
-      const sourceNode = mockAudioNode();
+      const sourceNode = mockAudioBufferSourceNode();
+      // Add jest spy methods
+      sourceNode.start = jest.fn();
+      sourceNode.stop = jest.fn();
       mockAudioContextInstance.createBufferSource.mockReturnValue(sourceNode);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -92,7 +94,10 @@ describe('PlayerContext', () => {
     });
 
     it('should pause audio', () => {
-      const sourceNode = mockAudioNode();
+      const sourceNode = mockAudioBufferSourceNode();
+      // Add jest spy methods
+      sourceNode.start = jest.fn();
+      sourceNode.stop = jest.fn();
       mockAudioContextInstance.createBufferSource.mockReturnValue(sourceNode);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -177,9 +182,15 @@ describe('PlayerContext', () => {
 
   describe('Filter Application', () => {
     it('should apply high-pass filter when enabled', () => {
-      const hpFilter = mockAudioNode();
-      const lpFilter = mockAudioNode();
+      const hpFilter = mockBiquadFilterNode();
+      hpFilter.connect = jest.fn();
+      hpFilter.disconnect = jest.fn();
+      const lpFilter = mockBiquadFilterNode();
+      lpFilter.connect = jest.fn();
+      lpFilter.disconnect = jest.fn();
       const gainNode = mockGainNode();
+      gainNode.connect = jest.fn();
+      gainNode.disconnect = jest.fn();
       
       mockAudioContextInstance.createBiquadFilter
         .mockReturnValueOnce(hpFilter)
@@ -210,9 +221,15 @@ describe('PlayerContext', () => {
     });
 
     it('should apply low-pass filter when enabled', () => {
-      const hpFilter = mockAudioNode();
-      const lpFilter = mockAudioNode();
+      const hpFilter = mockBiquadFilterNode();
+      hpFilter.connect = jest.fn();
+      hpFilter.disconnect = jest.fn();
+      const lpFilter = mockBiquadFilterNode();
+      lpFilter.connect = jest.fn();
+      lpFilter.disconnect = jest.fn();
       const gainNode = mockGainNode();
+      gainNode.connect = jest.fn();
+      gainNode.disconnect = jest.fn();
       
       mockAudioContextInstance.createBiquadFilter
         .mockReturnValueOnce(hpFilter)
@@ -243,9 +260,15 @@ describe('PlayerContext', () => {
     });
 
     it('should chain both filters when both enabled', () => {
-      const hpFilter = mockAudioNode();
-      const lpFilter = mockAudioNode();
+      const hpFilter = mockBiquadFilterNode();
+      hpFilter.connect = jest.fn();
+      hpFilter.disconnect = jest.fn();
+      const lpFilter = mockBiquadFilterNode();
+      lpFilter.connect = jest.fn();
+      lpFilter.disconnect = jest.fn();
       const gainNode = mockGainNode();
+      gainNode.connect = jest.fn();
+      gainNode.disconnect = jest.fn();
       
       mockAudioContextInstance.createBiquadFilter
         .mockReturnValueOnce(hpFilter)
@@ -279,7 +302,10 @@ describe('PlayerContext', () => {
 
   describe('Playback Events', () => {
     it('should update seekbar during playback', async () => {
-      const sourceNode = mockAudioNode();
+      const sourceNode = mockAudioBufferSourceNode();
+      // Add jest spy methods
+      sourceNode.start = jest.fn();
+      sourceNode.stop = jest.fn();
       mockAudioContextInstance.createBufferSource.mockReturnValue(sourceNode);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -305,7 +331,10 @@ describe('PlayerContext', () => {
     });
 
     it('should stop at end of audio', () => {
-      const sourceNode = mockAudioNode();
+      const sourceNode = mockAudioBufferSourceNode();
+      // Add jest spy methods
+      sourceNode.start = jest.fn();
+      sourceNode.stop = jest.fn();
       mockAudioContextInstance.createBufferSource.mockReturnValue(sourceNode);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -338,10 +367,16 @@ describe('PlayerContext', () => {
 
   describe('Resource Cleanup', () => {
     it('should disconnect audio nodes on unmount', () => {
-      const sourceNode = mockAudioNode();
+      const sourceNode = mockAudioBufferSourceNode();
+      // Add jest spy methods
+      sourceNode.start = jest.fn();
+      sourceNode.stop = jest.fn();
       const gainNode = mockGainNode();
-      const hpFilter = mockAudioNode();
-      const lpFilter = mockAudioNode();
+      gainNode.disconnect = jest.fn();
+      const hpFilter = mockBiquadFilterNode();
+      hpFilter.disconnect = jest.fn();
+      const lpFilter = mockBiquadFilterNode();
+      lpFilter.disconnect = jest.fn();
       
       mockAudioContextInstance.createBufferSource.mockReturnValue(sourceNode);
       mockAudioContextInstance.createGain.mockReturnValue(gainNode);
@@ -367,8 +402,12 @@ describe('PlayerContext', () => {
 
   describe('Performance Optimization', () => {
     it('should reuse audio nodes when possible', () => {
-      const sourceNode1 = mockAudioNode();
-      const sourceNode2 = mockAudioNode();
+      const sourceNode1 = mockAudioBufferSourceNode();
+      sourceNode1.start = jest.fn();
+      sourceNode1.stop = jest.fn();
+      const sourceNode2 = mockAudioBufferSourceNode();
+      sourceNode2.start = jest.fn();
+      sourceNode2.stop = jest.fn();
       mockAudioContextInstance.createBufferSource
         .mockReturnValueOnce(sourceNode1)
         .mockReturnValueOnce(sourceNode2);

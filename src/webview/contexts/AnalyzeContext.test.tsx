@@ -6,17 +6,25 @@ import { mockAudioBuffer } from '../../__tests__/mocks/audioContext';
 
 describe('AnalyzeContext', () => {
   const mockAudioBufferInstance = mockAudioBuffer({
-    duration: 10,
     sampleRate: 44100,
     numberOfChannels: 2,
     length: 441000,
   });
 
   const mockAnalyzeSettings = {
-    visibleWaveform: true,
-    visibleSpectrogram: true,
-    windowSizeIndex: 10, // 2^10 = 1024
-    spectrogramScaleType: 'Linear' as const,
+    waveformVerticalScale: 1.0,
+    spectrogramVerticalScale: 1.0,
+    windowSize: 1024,
+    hopSize: 512,
+    minFrequency: 0,
+    maxFrequency: 22050,
+    minTime: 0,
+    maxTime: 10,
+    minAmplitude: -1,
+    maxAmplitude: 1,
+    spectrogramAmplitudeRange: 60,
+    frequencyScale: 0, // Linear
+    melFilterNum: 128,
   };
 
   describe('AnalyzeProvider', () => {
@@ -250,8 +258,8 @@ describe('AnalyzeContext', () => {
       
       const { result } = renderHook(() => useAnalyze(), { wrapper });
       
-      const settings1024 = { ...mockAnalyzeSettings, windowSizeIndex: 10 }; // 1024
-      const settings2048 = { ...mockAnalyzeSettings, windowSizeIndex: 11 }; // 2048
+      const settings1024 = { ...mockAnalyzeSettings, windowSize: 1024 };
+      const settings2048 = { ...mockAnalyzeSettings, windowSize: 2048 };
       
       const spec1024 = result.current.getSpectrogram(0, settings1024, mockAudioBufferInstance);
       const spec2048 = result.current.getSpectrogram(0, settings2048, mockAudioBufferInstance);

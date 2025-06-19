@@ -1,10 +1,23 @@
 import createAudioContext from './createAudioContext';
 import { MockAudioContext } from '../__tests__/mocks/audioContext';
 
-// Mock AudioContext globally
-global.AudioContext = jest.fn().mockImplementation((options) => {
+// Store the original mock
+const originalAudioContext = (global as any).AudioContext;
+
+// Create a jest mock for AudioContext
+const mockAudioContextConstructor = jest.fn().mockImplementation((options?: AudioContextOptions) => {
   return new MockAudioContext(options);
-}) as any;
+});
+
+// Override the global AudioContext with our mock
+beforeAll(() => {
+  (global as any).AudioContext = mockAudioContextConstructor;
+});
+
+// Restore after tests
+afterAll(() => {
+  (global as any).AudioContext = originalAudioContext;
+});
 
 describe('createAudioContext', () => {
   beforeEach(() => {
@@ -15,7 +28,7 @@ describe('createAudioContext', () => {
     const sampleRate = 44100;
     const context = createAudioContext(sampleRate);
 
-    expect(global.AudioContext).toHaveBeenCalledWith({ sampleRate });
+    expect(mockAudioContextConstructor).toHaveBeenCalledWith({ sampleRate });
     expect(context.sampleRate).toBe(sampleRate);
   });
 
@@ -27,7 +40,7 @@ describe('createAudioContext', () => {
       expect(context.sampleRate).toBe(sampleRate);
     });
 
-    expect(global.AudioContext).toHaveBeenCalledTimes(testSampleRates.length);
+    expect(mockAudioContextConstructor).toHaveBeenCalledTimes(testSampleRates.length);
   });
 
   it('returns AudioContext instance', () => {
@@ -47,7 +60,7 @@ describe('createAudioContext', () => {
     const highSampleRate = 192000;
     const context = createAudioContext(highSampleRate);
 
-    expect(global.AudioContext).toHaveBeenCalledWith({ sampleRate: highSampleRate });
+    expect(mockAudioContextConstructor).toHaveBeenCalledWith({ sampleRate: highSampleRate });
     expect(context.sampleRate).toBe(highSampleRate);
   });
 
@@ -55,7 +68,7 @@ describe('createAudioContext', () => {
     const lowSampleRate = 8000;
     const context = createAudioContext(lowSampleRate);
 
-    expect(global.AudioContext).toHaveBeenCalledWith({ sampleRate: lowSampleRate });
+    expect(mockAudioContextConstructor).toHaveBeenCalledWith({ sampleRate: lowSampleRate });
     expect(context.sampleRate).toBe(lowSampleRate);
   });
 
@@ -64,7 +77,7 @@ describe('createAudioContext', () => {
     createAudioContext(sampleRate);
 
     // Verify constructor was called with exact options object
-    const lastCall = (global.AudioContext as jest.Mock).mock.calls.slice(-1)[0];
+    const lastCall = mockAudioContextConstructor.mock.calls.slice(-1)[0];
     expect(lastCall[0]).toEqual({ sampleRate });
   });
 });
