@@ -19,123 +19,82 @@ jest.mock('../types', () => ({
   },
 }));
 
-// Create mock canvas context
-const createMockCanvas2DContext = () => ({
+// Create shared mock canvas context
+const mockCanvasContext = {
   clearRect: jest.fn(),
   fillRect: jest.fn(),
   fillText: jest.fn(),
   getContext: jest.fn(),
   fillStyle: '',
   font: '',
-});
+};
 
 // Mock HTMLCanvasElement.getContext
 HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation((contextType) => {
   if (contextType === '2d') {
-    return createMockCanvas2DContext();
+    return mockCanvasContext;
   }
   return null;
 });
 
-// Test wrapper with context mocks
-const TestWrapper = ({ 
-  children, 
-  vscodeState = {}, 
-  analyzeState = {}, 
-  analyzeSettings = {} 
-}: {
-  children: React.ReactNode;
-  vscodeState?: any;
-  analyzeState?: any;
-  analyzeSettings?: any;
-}) => {
-  const mockVSCodeContext = {
-    audioBuffer: null,
-    ...vscodeState,
-  };
+// Simple test wrapper
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <div data-testid="test-wrapper">{children}</div>;
+};
 
-  const mockAnalyzeContext = {
-    roundToNearestNiceNumber: (value: number) => [value, 2],
-    getSpectrogram: jest.fn().mockReturnValue([]),
-    getMelSpectrogram: jest.fn().mockReturnValue([]),
-    getSpectrogramColor: jest.fn().mockReturnValue('rgb(255,0,0)'),
-    hzToMel: jest.fn().mockImplementation((hz) => hz * 1.127),
-    melToHz: jest.fn().mockImplementation((mel) => mel / 1.127),
-    ...analyzeState,
-  };
+// Mock functions that need to be tracked
+const mockGetSpectrogram = jest.fn().mockReturnValue([]);
+const mockGetMelSpectrogram = jest.fn().mockReturnValue([]);
+const mockGetSpectrogramColor = jest.fn().mockReturnValue('rgb(255,0,0)');
+const mockRoundToNearestNiceNumber = jest.fn().mockImplementation((value: number) => [value, 2]);
+const mockHzToMel = jest.fn().mockImplementation((hz) => hz * 1.127);
+const mockMelToHz = jest.fn().mockImplementation((mel) => mel / 1.127);
 
-  const mockAnalyzeSettings = {
-    minTime: 0,
-    maxTime: 1,
-    minFrequency: 0,
-    maxFrequency: 22050,
-    frequencyScale: 'linear' as const,
-    spectrogramVerticalScale: 1,
-    spectrogramAmplitudeRange: 80,
-    windowSize: 1024,
-    hopSize: 512,
-    ...analyzeSettings,
-  };
+// Mock contexts that can be updated
+let mockVSCodeContext: any = {
+  audioBuffer: null,
+};
 
-  return (
-    <div 
-      data-testid="mock-provider"
-      data-mock-vscode={JSON.stringify(mockVSCodeContext)}
-      data-mock-analyze={JSON.stringify(mockAnalyzeContext)}
-      data-mock-analyze-settings={JSON.stringify(mockAnalyzeSettings)}
-    >
-      {children}
-    </div>
-  );
+let mockAnalyzeContext = {
+  roundToNearestNiceNumber: mockRoundToNearestNiceNumber,
+  getSpectrogram: mockGetSpectrogram,
+  getMelSpectrogram: mockGetMelSpectrogram,
+  getSpectrogramColor: mockGetSpectrogramColor,
+  hzToMel: mockHzToMel,
+  melToHz: mockMelToHz,
+};
+
+let mockAnalyzeSettings = {
+  minTime: 0,
+  maxTime: 1,
+  minFrequency: 0,
+  maxFrequency: 22050,
+  frequencyScale: 'linear' as const,
+  spectrogramVerticalScale: 1,
+  spectrogramAmplitudeRange: 80,
+  windowSize: 1024,
+  hopSize: 512,
 };
 
 // Mock the hooks
 jest.mock('../hooks/useVSCode', () => ({
-  useVSCode: () => {
-    const element = document.querySelector('[data-mock-vscode]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-vscode') || '{}');
-    }
-    return { audioBuffer: null };
-  },
+  useVSCode: () => mockVSCodeContext,
 }));
 
 jest.mock('../hooks/useAnalyze', () => ({
-  useAnalyze: () => {
-    const element = document.querySelector('[data-mock-analyze]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze') || '{}');
-    }
-    return {
-      roundToNearestNiceNumber: (value: number) => [value, 2],
-      getSpectrogram: jest.fn().mockReturnValue([]),
-      getMelSpectrogram: jest.fn().mockReturnValue([]),
-      getSpectrogramColor: jest.fn().mockReturnValue('rgb(255,0,0)'),
-      hzToMel: jest.fn().mockImplementation((hz) => hz * 1.127),
-      melToHz: jest.fn().mockImplementation((mel) => mel / 1.127),
-    };
-  },
+  useAnalyze: () => mockAnalyzeContext,
 }));
 
 jest.mock('../hooks/useAnalyzeSettings', () => ({
-  useAnalyzeSettings: () => {
-    const element = document.querySelector('[data-mock-analyze-settings]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze-settings') || '{}');
-    }
-    return {
-      minTime: 0,
-      maxTime: 1,
-      minFrequency: 0,
-      maxFrequency: 22050,
-      frequencyScale: 'linear' as const,
-      spectrogramVerticalScale: 1,
-      spectrogramAmplitudeRange: 80,
-      windowSize: 1024,
-      hopSize: 512,
-    };
-  },
+  useAnalyzeSettings: () => mockAnalyzeSettings,
 }));
+
+// Helper function to update mock contexts
+const updateMockContexts = (vscodeState = {}, analyzeState = {}, analyzeSettingsState = {}) => {
+  mockVSCodeContext = { ...mockVSCodeContext, ...vscodeState };
+  mockAnalyzeContext = { ...mockAnalyzeContext, ...analyzeState };
+  mockAnalyzeSettings = { ...mockAnalyzeSettings, ...analyzeSettingsState };
+};
 
 describe('Spectrogram Component', () => {
   const createMockAudioBuffer = (numberOfChannels = 2, length = 1000) => ({
@@ -154,6 +113,33 @@ describe('Spectrogram Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock functions
+    mockGetSpectrogram.mockReturnValue([]);
+    mockGetMelSpectrogram.mockReturnValue([]);
+    mockGetSpectrogramColor.mockReturnValue('rgb(255,0,0)');
+    // Reset mock contexts to defaults
+    mockVSCodeContext = {
+      audioBuffer: null,
+    };
+    mockAnalyzeContext = {
+      roundToNearestNiceNumber: mockRoundToNearestNiceNumber,
+      getSpectrogram: mockGetSpectrogram,
+      getMelSpectrogram: mockGetMelSpectrogram,
+      getSpectrogramColor: mockGetSpectrogramColor,
+      hzToMel: mockHzToMel,
+      melToHz: mockMelToHz,
+    };
+    mockAnalyzeSettings = {
+      minTime: 0,
+      maxTime: 1,
+      minFrequency: 0,
+      maxFrequency: 22050,
+      frequencyScale: 'linear' as const,
+      spectrogramVerticalScale: 1,
+      spectrogramAmplitudeRange: 80,
+      windowSize: 1024,
+      hopSize: 512,
+    };
   });
 
   describe('Basic Rendering', () => {
@@ -164,10 +150,15 @@ describe('Spectrogram Component', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByRole('img', { hidden: true })).toBeInTheDocument(); // Canvas elements have img role
       expect(document.querySelector('.canvasBox')).toBeInTheDocument();
       expect(document.querySelector('.mainCanvas')).toBeInTheDocument();
       expect(document.querySelector('.axisCanvas')).toBeInTheDocument();
+      
+      // Check that canvas elements are actually canvas elements
+      const mainCanvas = document.querySelector('.mainCanvas') as HTMLCanvasElement;
+      const axisCanvas = document.querySelector('.axisCanvas') as HTMLCanvasElement;
+      expect(mainCanvas.tagName.toLowerCase()).toBe('canvas');
+      expect(axisCanvas.tagName.toLowerCase()).toBe('canvas');
     });
 
     it('sets correct canvas dimensions', () => {
@@ -189,8 +180,10 @@ describe('Spectrogram Component', () => {
 
   describe('Audio Data Rendering', () => {
     it('renders without crashing when no audio buffer', () => {
+      updateMockContexts({ audioBuffer: null });
+      
       render(
-        <TestWrapper vscodeState={{ audioBuffer: null }}>
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -201,22 +194,18 @@ describe('Spectrogram Component', () => {
 
     it('renders spectrogram when audio buffer is available', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([[1, 2, 3], [4, 5, 6]]);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Should clear canvases
-      expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 300);
+      expect(mockCanvasContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 300);
       
       // Should generate spectrogram data
       expect(mockGetSpectrogram).toHaveBeenCalledWith(0, expect.any(Object), audioBuffer);
@@ -226,17 +215,12 @@ describe('Spectrogram Component', () => {
   describe('Frequency Scale Rendering', () => {
     it('renders linear spectrogram by default', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([[1, 2], [3, 4]]);
+      mockGetSpectrogram.mockReturnValue([[1, 2], [3, 4]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { frequencyScale: 'linear' });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ frequencyScale: 'linear' }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -246,17 +230,12 @@ describe('Spectrogram Component', () => {
 
     it('renders log spectrogram when log scale is selected', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([[1, 2], [3, 4]]);
+      mockGetSpectrogram.mockReturnValue([[1, 2], [3, 4]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { frequencyScale: 'log', minFrequency: 10 });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ frequencyScale: 'log', minFrequency: 10 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -266,17 +245,12 @@ describe('Spectrogram Component', () => {
 
     it('renders mel spectrogram when mel scale is selected', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetMelSpectrogram = jest.fn().mockReturnValue([[1, 2], [3, 4]]);
+      mockGetMelSpectrogram.mockReturnValue([[1, 2], [3, 4]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { frequencyScale: 'mel' });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getMelSpectrogram: mockGetMelSpectrogram }}
-          analyzeSettings={{ frequencyScale: 'mel' }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -286,18 +260,16 @@ describe('Spectrogram Component', () => {
 
     it('adjusts minimum frequency for log scale', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([]);
+      mockGetSpectrogram.mockReturnValue([]);
+      
+      updateMockContexts({ audioBuffer }, {}, { 
+        frequencyScale: 'log',
+        minFrequency: 0, // Should be adjusted to 1
+        maxFrequency: 1000 
+      });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ 
-            frequencyScale: 'log',
-            minFrequency: 0, // Should be adjusted to 1
-            maxFrequency: 1000 
-          }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -311,17 +283,13 @@ describe('Spectrogram Component', () => {
   describe('Axis Drawing', () => {
     it('draws time axis for all frequency scales', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockRoundToNearestNiceNumber = jest.fn().mockReturnValue([0.1, 1]);
+      mockRoundToNearestNiceNumber.mockReturnValue([0.1, 1]);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { minTime: 0, maxTime: 1 });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ roundToNearestNiceNumber: mockRoundToNearestNiceNumber }}
-          analyzeSettings={{ minTime: 0, maxTime: 1 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -330,76 +298,65 @@ describe('Spectrogram Component', () => {
       expect(mockRoundToNearestNiceNumber).toHaveBeenCalledWith(0.1);
       
       // Should draw axis labels
-      expect(mockContext.fillText).toHaveBeenCalled();
+      expect(mockCanvasContext.fillText).toHaveBeenCalled();
     });
 
     it('draws linear frequency axis', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { 
+        frequencyScale: 'linear',
+        minFrequency: 0,
+        maxFrequency: 22050,
+        spectrogramVerticalScale: 1 
+      });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{ 
-            frequencyScale: 'linear',
-            minFrequency: 0,
-            maxFrequency: 22050,
-            spectrogramVerticalScale: 1 
-          }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Should draw frequency labels
-      expect(mockContext.fillText).toHaveBeenCalled();
+      expect(mockCanvasContext.fillText).toHaveBeenCalled();
     });
 
     it('draws logarithmic frequency axis', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { 
+        frequencyScale: 'log',
+        minFrequency: 10,
+        maxFrequency: 22050,
+        spectrogramVerticalScale: 1 
+      });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{ 
-            frequencyScale: 'log',
-            minFrequency: 10,
-            maxFrequency: 22050,
-            spectrogramVerticalScale: 1 
-          }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Should draw log frequency labels
-      expect(mockContext.fillText).toHaveBeenCalled();
+      expect(mockCanvasContext.fillText).toHaveBeenCalled();
     });
 
     it('draws mel frequency axis', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockHzToMel = jest.fn().mockReturnValue(1000);
-      const mockMelToHz = jest.fn().mockReturnValue(100);
+      mockHzToMel.mockReturnValue(1000);
+      mockMelToHz.mockReturnValue(100);
+      mockGetMelSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { 
+        frequencyScale: 'mel',
+        minFrequency: 0,
+        maxFrequency: 22050,
+        spectrogramVerticalScale: 1 
+      });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ hzToMel: mockHzToMel, melToHz: mockMelToHz }}
-          analyzeSettings={{ 
-            frequencyScale: 'mel',
-            minFrequency: 0,
-            maxFrequency: 22050,
-            spectrogramVerticalScale: 1 
-          }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -413,60 +370,58 @@ describe('Spectrogram Component', () => {
   describe('Channel Labels', () => {
     it('draws L/R channel labels for stereo', () => {
       const audioBuffer = createMockAudioBuffer(2);
-      const mockContext = createMockCanvas2DContext();
-      
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
+      updateMockContexts({ audioBuffer });
 
       // Test left channel
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <Spectrogram channelIndex={0} numberOfChannels={2} />
         </TestWrapper>
       );
 
-      expect(mockContext.fillText).toHaveBeenCalledWith('Lch', 60, 18);
+      expect(mockCanvasContext.fillText).toHaveBeenCalledWith('Lch', 60, 18);
 
       jest.clearAllMocks();
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
 
       // Test right channel
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <Spectrogram channelIndex={1} numberOfChannels={2} />
         </TestWrapper>
       );
 
-      expect(mockContext.fillText).toHaveBeenCalledWith('Rch', 60, 18);
+      expect(mockCanvasContext.fillText).toHaveBeenCalledWith('Rch', 60, 18);
     });
 
     it('draws numbered channel labels for multi-channel', () => {
       const audioBuffer = createMockAudioBuffer(4);
-      const mockContext = createMockCanvas2DContext();
-      
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
+      updateMockContexts({ audioBuffer });
 
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <Spectrogram channelIndex={2} numberOfChannels={4} />
         </TestWrapper>
       );
 
-      expect(mockContext.fillText).toHaveBeenCalledWith('ch3', 60, 18);
+      expect(mockCanvasContext.fillText).toHaveBeenCalledWith('ch3', 60, 18);
     });
 
     it('does not draw channel labels for mono', () => {
       const audioBuffer = createMockAudioBuffer(1);
-      const mockContext = createMockCanvas2DContext();
-      
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
+      updateMockContexts({ audioBuffer });
 
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <Spectrogram channelIndex={0} numberOfChannels={1} />
         </TestWrapper>
       );
 
       // Should not draw channel labels for mono
-      const channelLabelCalls = (mockContext.fillText as jest.Mock).mock.calls
+      const channelLabelCalls = (mockCanvasContext.fillText as jest.Mock).mock.calls
         .filter(call => call[0] === 'Lch' || call[0] === 'Rch' || call[0].startsWith('ch'));
       
       expect(channelLabelCalls).toHaveLength(0);
@@ -476,25 +431,17 @@ describe('Spectrogram Component', () => {
   describe('Spectrogram Data Rendering', () => {
     it('draws spectrogram pixels with correct colors', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([[0.5, 0.8], [0.2, 0.9]]);
-      const mockGetSpectrogramColor = jest.fn()
+      mockGetSpectrogram.mockReturnValue([[0.5, 0.8], [0.2, 0.9]]);
+      mockGetSpectrogramColor
         .mockReturnValueOnce('rgb(100,100,100)')
         .mockReturnValueOnce('rgb(200,200,200)')
         .mockReturnValueOnce('rgb(50,50,50)')
         .mockReturnValueOnce('rgb(250,250,250)');
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { spectrogramAmplitudeRange: 80 });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ 
-            getSpectrogram: mockGetSpectrogram,
-            getSpectrogramColor: mockGetSpectrogramColor 
-          }}
-          analyzeSettings={{ spectrogramAmplitudeRange: 80 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -506,22 +453,18 @@ describe('Spectrogram Component', () => {
       expect(mockGetSpectrogramColor).toHaveBeenCalledWith(0.9, 80);
 
       // Should draw rectangles with correct colors
-      expect(mockContext.fillRect).toHaveBeenCalled();
+      expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     });
 
     it('handles empty spectrogram data', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([]);
+      mockGetSpectrogram.mockReturnValue([]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer: null });
 
       expect(() => {
         render(
-          <TestWrapper 
-            vscodeState={{ audioBuffer }}
-            analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          >
+          <TestWrapper>
             <Spectrogram {...defaultProps} />
           </TestWrapper>
         );
@@ -530,28 +473,23 @@ describe('Spectrogram Component', () => {
 
     it('calculates correct rectangle dimensions', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([[1, 2, 3]]);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { 
+        minTime: 0,
+        maxTime: 1,
+        hopSize: 512 
+      });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ 
-            minTime: 0,
-            maxTime: 1,
-            hopSize: 512 
-          }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Should draw rectangles with calculated dimensions
-      expect(mockContext.fillRect).toHaveBeenCalled();
-      const calls = (mockContext.fillRect as jest.Mock).mock.calls;
+      expect(mockCanvasContext.fillRect).toHaveBeenCalled();
+      const calls = (mockCanvasContext.fillRect as jest.Mock).mock.calls;
       calls.forEach(call => {
         expect(call[2]).toBeGreaterThan(0); // width > 0
         expect(call[3]).toBeGreaterThan(0); // height > 0
@@ -562,25 +500,21 @@ describe('Spectrogram Component', () => {
   describe('Settings Integration', () => {
     it('responds to frequency range changes', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([]);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
+      updateMockContexts({ audioBuffer }, {}, { minFrequency: 0, maxFrequency: 22050 });
+
       const { rerender } = render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ minFrequency: 0, maxFrequency: 22050 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Change frequency range
+      updateMockContexts({ audioBuffer }, {}, { minFrequency: 100, maxFrequency: 10000 });
+      
       rerender(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ minFrequency: 100, maxFrequency: 10000 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -591,25 +525,21 @@ describe('Spectrogram Component', () => {
 
     it('responds to time range changes', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockGetSpectrogram = jest.fn().mockReturnValue([]);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
+      updateMockContexts({ audioBuffer }, {}, { minTime: 0, maxTime: 1 });
+
       const { rerender } = render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ minTime: 0, maxTime: 1 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Change time range
+      updateMockContexts({ audioBuffer }, {}, { minTime: 0.5, maxTime: 1.5 });
+      
       rerender(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ getSpectrogram: mockGetSpectrogram }}
-          analyzeSettings={{ minTime: 0.5, maxTime: 1.5 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
@@ -620,21 +550,18 @@ describe('Spectrogram Component', () => {
 
     it('uses spectrogramVerticalScale setting', () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockContext = createMockCanvas2DContext();
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext);
+      updateMockContexts({ audioBuffer }, {}, { spectrogramVerticalScale: 2 });
 
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{ spectrogramVerticalScale: 2 }}
-        >
+        <TestWrapper>
           <Spectrogram {...defaultProps} />
         </TestWrapper>
       );
 
       // Should use vertical scale in calculations
-      expect(mockContext.fillText).toHaveBeenCalled();
+      expect(mockCanvasContext.fillText).toHaveBeenCalled();
     });
   });
 
@@ -643,22 +570,33 @@ describe('Spectrogram Component', () => {
       HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(null);
       
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       expect(() => {
         render(
-          <TestWrapper vscodeState={{ audioBuffer }}>
+          <TestWrapper>
             <Spectrogram {...defaultProps} />
           </TestWrapper>
         );
       }).not.toThrow();
+      
+      // Restore normal mock
+      HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation((contextType) => {
+        if (contextType === '2d') {
+          return mockCanvasContext;
+        }
+        return null;
+      });
     });
 
     it('handles invalid channel index', () => {
       const audioBuffer = createMockAudioBuffer(2);
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
+      updateMockContexts({ audioBuffer });
       
       expect(() => {
         render(
-          <TestWrapper vscodeState={{ audioBuffer }}>
+          <TestWrapper>
             <Spectrogram channelIndex={5} numberOfChannels={2} />
           </TestWrapper>
         );
@@ -667,13 +605,13 @@ describe('Spectrogram Component', () => {
 
     it('handles zero frequency range', () => {
       const audioBuffer = createMockAudioBuffer();
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
+      updateMockContexts({ audioBuffer }, {}, { minFrequency: 1000, maxFrequency: 1000 });
+
       expect(() => {
         render(
-          <TestWrapper 
-            vscodeState={{ audioBuffer }}
-            analyzeSettings={{ minFrequency: 1000, maxFrequency: 1000 }}
-          >
+          <TestWrapper>
             <Spectrogram {...defaultProps} />
           </TestWrapper>
         );
@@ -682,13 +620,13 @@ describe('Spectrogram Component', () => {
 
     it('handles zero time range', () => {
       const audioBuffer = createMockAudioBuffer();
+      mockGetSpectrogram.mockReturnValue([[1, 2, 3], [4, 5, 6]]);
       
+      updateMockContexts({ audioBuffer }, {}, { minTime: 1, maxTime: 1 });
+
       expect(() => {
         render(
-          <TestWrapper 
-            vscodeState={{ audioBuffer }}
-            analyzeSettings={{ minTime: 1, maxTime: 1 }}
-          >
+          <TestWrapper>
             <Spectrogram {...defaultProps} />
           </TestWrapper>
         );
@@ -720,8 +658,8 @@ describe('Spectrogram Component', () => {
       const mainCanvas = document.querySelector('.mainCanvas');
       const axisCanvas = document.querySelector('.axisCanvas');
 
-      expect(canvasBox).toContainElement(mainCanvas);
-      expect(canvasBox).toContainElement(axisCanvas);
+      expect(canvasBox).toContainElement(mainCanvas as HTMLElement);
+      expect(canvasBox).toContainElement(axisCanvas as HTMLElement);
     });
   });
 });

@@ -23,103 +23,81 @@ jest.mock('./Spectrogram', () => ({
   ),
 }));
 
-// Create test wrapper with context mocks
-const TestWrapper = ({ 
-  children, 
-  vscodeState = {}, 
-  analyzeState = {}, 
-  analyzeSettings = {} 
-}: {
-  children: React.ReactNode;
-  vscodeState?: any;
-  analyzeState?: any;
-  analyzeSettings?: any;
-}) => {
-  const mockVSCodeContext = {
-    audioBuffer: null,
-    config: null,
-    fileData: null,
-    isLoading: false,
-    error: null,
-    ...vscodeState,
-  };
+// Simple test wrapper
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <div data-testid="test-wrapper">{children}</div>;
+};
 
-  const mockAnalyzeContext = {
-    analyze: jest.fn(),
-    isAnalyzing: false,
-    lastAnalyzeTime: null,
-    ...analyzeState,
-  };
+// Mock functions that need to be tracked
+const mockAnalyze = jest.fn();
+const mockSetWaveformVisible = jest.fn();
+const mockSetSpectrogramVisible = jest.fn();
 
-  const mockAnalyzeSettings = {
-    waveformVisible: true,
-    spectrogramVisible: true,
-    setWaveformVisible: jest.fn(),
-    setSpectrogramVisible: jest.fn(),
-    fftWindowSize: 1024,
-    freqScale: 'linear' as const,
-    ...analyzeSettings,
-  };
+// Mock contexts that can be updated
+let mockVSCodeContext = {
+  audioBuffer: null as AudioBuffer | null,
+  config: null as any,
+  fileData: null as any,
+  isLoading: false,
+  error: null as string | null,
+};
 
-  return (
-    <div 
-      data-testid="mock-provider"
-      data-mock-vscode={JSON.stringify(mockVSCodeContext)}
-      data-mock-analyze={JSON.stringify(mockAnalyzeContext)}
-      data-mock-analyze-settings={JSON.stringify(mockAnalyzeSettings)}
-    >
-      {children}
-    </div>
-  );
+let mockAnalyzeContext = {
+  analyze: mockAnalyze,
+  isAnalyzing: false,
+  lastAnalyzeTime: null as number | null,
+  getSpectrogram: jest.fn(),
+  getMelSpectrogram: jest.fn(),
+  getSpectrogramColor: jest.fn(),
+  roundToNearestNiceNumber: jest.fn(),
+  hzToMel: jest.fn(),
+  melToHz: jest.fn(),
+};
+
+let mockAnalyzeSettingsContext = {
+  waveformVisible: true,
+  spectrogramVisible: true,
+  setWaveformVisible: mockSetWaveformVisible,
+  setSpectrogramVisible: mockSetSpectrogramVisible,
+  waveformVerticalScale: 1.0,
+  spectrogramVerticalScale: 1.0,
+  windowSizeIndex: 2,
+  windowSize: 1024,
+  hopSize: 512,
+  minFrequency: 0,
+  maxFrequency: 22050,
+  minTime: 0,
+  maxTime: 10,
+  minAmplitude: -1,
+  maxAmplitude: 1,
+  spectrogramAmplitudeRange: -90,
+  frequencyScale: 0,
+  melFilterNum: 40,
 };
 
 // Mock the hooks
 jest.mock('../hooks/useVSCode', () => ({
-  useVSCode: () => {
-    const element = document.querySelector('[data-mock-vscode]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-vscode') || '{}');
-    }
-    return {
-      audioBuffer: null,
-      config: null,
-      fileData: null,
-      isLoading: false,
-      error: null,
-    };
-  },
+  useVSCode: () => mockVSCodeContext,
 }));
 
 jest.mock('../hooks/useAnalyze', () => ({
-  useAnalyze: () => {
-    const element = document.querySelector('[data-mock-analyze]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze') || '{}');
-    }
-    return {
-      analyze: jest.fn(),
-      isAnalyzing: false,
-      lastAnalyzeTime: null,
-    };
-  },
+  useAnalyze: () => mockAnalyzeContext,
 }));
 
 jest.mock('../hooks/useAnalyzeSettings', () => ({
-  useAnalyzeSettings: () => {
-    const element = document.querySelector('[data-mock-analyze-settings]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze-settings') || '{}');
-    }
-    return {
-      waveformVisible: true,
-      spectrogramVisible: true,
-      setWaveformVisible: jest.fn(),
-      setSpectrogramVisible: jest.fn(),
-      fftWindowSize: 1024,
-      freqScale: 'linear' as const,
-    };
-  },
+  useAnalyzeSettings: () => mockAnalyzeSettingsContext,
 }));
+
+// Helper function to update mock contexts
+const updateMockContexts = (
+  vscodeState = {}, 
+  analyzeState = {}, 
+  analyzeSettingsState = {}
+) => {
+  mockVSCodeContext = { ...mockVSCodeContext, ...vscodeState };
+  mockAnalyzeContext = { ...mockAnalyzeContext, ...analyzeState };
+  mockAnalyzeSettingsContext = { ...mockAnalyzeSettingsContext, ...analyzeSettingsState };
+};
 
 describe('Analyzer Component', () => {
   const user = userEvent.setup();
@@ -135,6 +113,45 @@ describe('Analyzer Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock contexts to defaults
+    mockVSCodeContext = {
+      audioBuffer: null,
+      config: null,
+      fileData: null,
+      isLoading: false,
+      error: null,
+    };
+    mockAnalyzeContext = {
+      analyze: mockAnalyze,
+      isAnalyzing: false,
+      lastAnalyzeTime: null,
+      getSpectrogram: jest.fn(),
+      getMelSpectrogram: jest.fn(),
+      getSpectrogramColor: jest.fn(),
+      roundToNearestNiceNumber: jest.fn(),
+      hzToMel: jest.fn(),
+      melToHz: jest.fn(),
+    };
+    mockAnalyzeSettingsContext = {
+      waveformVisible: true,
+      spectrogramVisible: true,
+      setWaveformVisible: mockSetWaveformVisible,
+      setSpectrogramVisible: mockSetSpectrogramVisible,
+      waveformVerticalScale: 1.0,
+      spectrogramVerticalScale: 1.0,
+      windowSizeIndex: 2,
+      windowSize: 1024,
+      hopSize: 512,
+      minFrequency: 0,
+      maxFrequency: 22050,
+      minTime: 0,
+      maxTime: 10,
+      minAmplitude: -1,
+      maxAmplitude: 1,
+      spectrogramAmplitudeRange: -90,
+      frequencyScale: 0,
+      melFilterNum: 40,
+    };
   });
 
   describe('Basic Rendering', () => {
@@ -150,8 +167,10 @@ describe('Analyzer Component', () => {
     });
 
     it('disables analyze button when no audio buffer', () => {
+      updateMockContexts({ audioBuffer: null });
+      
       render(
-        <TestWrapper vscodeState={{ audioBuffer: null }}>
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -161,9 +180,10 @@ describe('Analyzer Component', () => {
 
     it('enables analyze button when audio buffer is available', () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
@@ -174,99 +194,72 @@ describe('Analyzer Component', () => {
 
   describe('Auto Analysis', () => {
     it('automatically analyzes when autoAnalyze is true and audio buffer is available', async () => {
-      const analyzeMock = jest.fn();
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer autoAnalyze={true} />
         </TestWrapper>
       );
 
       await waitFor(() => {
-        expect(analyzeMock).toHaveBeenCalledTimes(1);
+        expect(mockAnalyze).toHaveBeenCalledTimes(1);
       });
     });
 
     it('does not auto analyze when autoAnalyze is false', async () => {
-      const analyzeMock = jest.fn();
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer autoAnalyze={false} />
         </TestWrapper>
       );
 
       // Wait a bit to ensure no analysis happens
       await new Promise(resolve => setTimeout(resolve, 100));
-      expect(analyzeMock).not.toHaveBeenCalled();
+      expect(mockAnalyze).not.toHaveBeenCalled();
     });
 
     it('does not auto analyze when already analyzed', async () => {
-      const analyzeMock = jest.fn();
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer }, { lastAnalyzeTime: Date.now() });
       
-      // First render with analysis
-      const { rerender } = render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock, lastAnalyzeTime: Date.now() }}
-        >
+      render(
+        <TestWrapper>
           <Analyzer autoAnalyze={true} />
         </TestWrapper>
       );
 
-      await waitFor(() => {
-        expect(analyzeMock).toHaveBeenCalledTimes(1);
-      });
-
-      // Rerender should not trigger another analysis
-      rerender(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock, lastAnalyzeTime: Date.now() }}
-        >
-          <Analyzer autoAnalyze={true} />
-        </TestWrapper>
-      );
-
-      expect(analyzeMock).toHaveBeenCalledTimes(1);
+      // Wait a bit to ensure no additional analysis happens
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(mockAnalyze).not.toHaveBeenCalled();
     });
   });
 
   describe('Manual Analysis', () => {
     it('calls analyze when button is clicked', async () => {
-      const analyzeMock = jest.fn();
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: analyzeMock }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );
 
       await user.click(screen.getByRole('button', { name: /analyze/i }));
-      expect(analyzeMock).toHaveBeenCalledTimes(1);
+      expect(mockAnalyze).toHaveBeenCalledTimes(1);
     });
 
     it('shows analyzing state when processing', () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer }, { isAnalyzing: true });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ isAnalyzing: true }}
-        >
+        <TestWrapper>
           <Analyzer />
         </TestWrapper>
       );

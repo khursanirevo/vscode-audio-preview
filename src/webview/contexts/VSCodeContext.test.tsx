@@ -280,7 +280,7 @@ describe('VSCodeContext', () => {
 
       // Should request config again
       const sentMessages = mockVSCodeAPI.__getSentMessages();
-      const configRequests = sentMessages.filter(msg => msg.type === 'WV_CONFIG');
+      const configRequests = sentMessages.filter((msg: any) => msg.type === 'WV_CONFIG');
       expect(configRequests.length).toBeGreaterThan(1);
     });
 
@@ -429,7 +429,7 @@ describe('VSCodeContext', () => {
     it('should provide postMessage function', () => {
       let contextValue: VSCodeContextType | undefined;
 
-      const TestContextConsumer = () => {
+      const TestContextConsumer = (): null => {
         contextValue = React.useContext(VSCodeContext);
         return null;
       };
@@ -447,7 +447,7 @@ describe('VSCodeContext', () => {
     it('should send messages through postMessage', () => {
       let contextValue: VSCodeContextType | undefined;
 
-      const TestContextConsumer = () => {
+      const TestContextConsumer = (): null => {
         contextValue = React.useContext(VSCodeContext);
         return null;
       };

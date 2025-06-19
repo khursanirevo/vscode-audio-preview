@@ -24,126 +24,81 @@ jest.mock('../types', () => ({
   },
 }));
 
-// Test wrapper with context mocks
-const TestWrapper = ({ 
-  children, 
-  vscodeState = {}, 
-  playerState = {},
-  analyzeState = {}, 
-  analyzeSettings = {} 
-}: {
-  children: React.ReactNode;
-  vscodeState?: any;
-  playerState?: any;
-  analyzeState?: any;
-  analyzeSettings?: any;
-}) => {
-  const mockVSCodeContext = {
-    audioBuffer: null,
-    ...vscodeState,
-  };
+// Simple test wrapper
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <div data-testid="test-wrapper">{children}</div>;
+};
 
-  const mockPlayerContext = {
-    seekbarPercent: 0,
-    setSeekbarPercent: jest.fn(),
-    ...playerState,
-  };
+// Mock functions that need to be tracked
+const mockSetSeekbarPercent = jest.fn();
+const mockAnalyze = jest.fn();
+const mockSetMinTime = jest.fn();
+const mockSetMaxTime = jest.fn();
+const mockSetMinAmplitude = jest.fn();
+const mockSetMaxAmplitude = jest.fn();
+const mockSetMinFrequency = jest.fn();
+const mockSetMaxFrequency = jest.fn();
+const mockResetToDefaultTimeRange = jest.fn();
+const mockResetToDefaultAmplitudeRange = jest.fn();
+const mockResetToDefaultFrequencyRange = jest.fn();
 
-  const mockAnalyzeContext = {
-    analyze: jest.fn(),
-    ...analyzeState,
-  };
+// Mock contexts that can be updated
+let mockVSCodeContext: any = {
+  audioBuffer: null,
+};
 
-  const mockAnalyzeSettings = {
-    minTime: 0,
-    maxTime: 1,
-    setMinTime: jest.fn(),
-    setMaxTime: jest.fn(),
-    minAmplitude: -1,
-    maxAmplitude: 1,
-    setMinAmplitude: jest.fn(),
-    setMaxAmplitude: jest.fn(),
-    minFrequency: 0,
-    maxFrequency: 22050,
-    setMinFrequency: jest.fn(),
-    setMaxFrequency: jest.fn(),
-    frequencyScale: 'linear' as const,
-    resetToDefaultTimeRange: jest.fn(),
-    resetToDefaultAmplitudeRange: jest.fn(),
-    resetToDefaultFrequencyRange: jest.fn(),
-    ...analyzeSettings,
-  };
+let mockPlayerContext = {
+  seekbarPercent: 0,
+  setSeekbarPercent: mockSetSeekbarPercent,
+};
 
-  return (
-    <div 
-      data-testid="mock-provider"
-      data-mock-vscode={JSON.stringify(mockVSCodeContext)}
-      data-mock-player={JSON.stringify(mockPlayerContext)}
-      data-mock-analyze={JSON.stringify(mockAnalyzeContext)}
-      data-mock-analyze-settings={JSON.stringify(mockAnalyzeSettings)}
-    >
-      {children}
-    </div>
-  );
+let mockAnalyzeContext = {
+  analyze: mockAnalyze,
+};
+
+let mockAnalyzeSettings = {
+  minTime: 0,
+  maxTime: 1,
+  setMinTime: mockSetMinTime,
+  setMaxTime: mockSetMaxTime,
+  minAmplitude: -1,
+  maxAmplitude: 1,
+  setMinAmplitude: mockSetMinAmplitude,
+  setMaxAmplitude: mockSetMaxAmplitude,
+  minFrequency: 0,
+  maxFrequency: 22050,
+  setMinFrequency: mockSetMinFrequency,
+  setMaxFrequency: mockSetMaxFrequency,
+  frequencyScale: 'linear' as const,
+  resetToDefaultTimeRange: mockResetToDefaultTimeRange,
+  resetToDefaultAmplitudeRange: mockResetToDefaultAmplitudeRange,
+  resetToDefaultFrequencyRange: mockResetToDefaultFrequencyRange,
 };
 
 // Mock the hooks
 jest.mock('../hooks/useVSCode', () => ({
-  useVSCode: () => {
-    const element = document.querySelector('[data-mock-vscode]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-vscode') || '{}');
-    }
-    return { audioBuffer: null };
-  },
+  useVSCode: () => mockVSCodeContext,
 }));
 
 jest.mock('../hooks/usePlayer', () => ({
-  usePlayer: () => {
-    const element = document.querySelector('[data-mock-player]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-player') || '{}');
-    }
-    return { seekbarPercent: 0, setSeekbarPercent: jest.fn() };
-  },
+  usePlayer: () => mockPlayerContext,
 }));
 
 jest.mock('../hooks/useAnalyze', () => ({
-  useAnalyze: () => {
-    const element = document.querySelector('[data-mock-analyze]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze') || '{}');
-    }
-    return { analyze: jest.fn() };
-  },
+  useAnalyze: () => mockAnalyzeContext,
 }));
 
 jest.mock('../hooks/useAnalyzeSettings', () => ({
-  useAnalyzeSettings: () => {
-    const element = document.querySelector('[data-mock-analyze-settings]') as any;
-    if (element) {
-      return JSON.parse(element.getAttribute('data-mock-analyze-settings') || '{}');
-    }
-    return {
-      minTime: 0,
-      maxTime: 1,
-      setMinTime: jest.fn(),
-      setMaxTime: jest.fn(),
-      minAmplitude: -1,
-      maxAmplitude: 1,
-      setMinAmplitude: jest.fn(),
-      setMaxAmplitude: jest.fn(),
-      minFrequency: 0,
-      maxFrequency: 22050,
-      setMinFrequency: jest.fn(),
-      setMaxFrequency: jest.fn(),
-      frequencyScale: 'linear' as const,
-      resetToDefaultTimeRange: jest.fn(),
-      resetToDefaultAmplitudeRange: jest.fn(),
-      resetToDefaultFrequencyRange: jest.fn(),
-    };
-  },
+  useAnalyzeSettings: () => mockAnalyzeSettings,
 }));
+
+// Helper function to update mock contexts
+const updateMockContexts = (vscodeState = {}, playerState = {}, analyzeState = {}, analyzeSettingsState = {}) => {
+  mockVSCodeContext = { ...mockVSCodeContext, ...vscodeState };
+  mockPlayerContext = { ...mockPlayerContext, ...playerState };
+  mockAnalyzeContext = { ...mockAnalyzeContext, ...analyzeState };
+  mockAnalyzeSettings = { ...mockAnalyzeSettings, ...analyzeSettingsState };
+};
 
 describe('FigureInteraction Component', () => {
   const user = userEvent.setup();
@@ -158,6 +113,35 @@ describe('FigureInteraction Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock contexts to defaults
+    mockVSCodeContext = {
+      audioBuffer: null,
+    };
+    mockPlayerContext = {
+      seekbarPercent: 0,
+      setSeekbarPercent: mockSetSeekbarPercent,
+    };
+    mockAnalyzeContext = {
+      analyze: mockAnalyze,
+    };
+    mockAnalyzeSettings = {
+      minTime: 0,
+      maxTime: 1,
+      setMinTime: mockSetMinTime,
+      setMaxTime: mockSetMaxTime,
+      minAmplitude: -1,
+      maxAmplitude: 1,
+      setMinAmplitude: mockSetMinAmplitude,
+      setMaxAmplitude: mockSetMaxAmplitude,
+      minFrequency: 0,
+      maxFrequency: 22050,
+      setMinFrequency: mockSetMinFrequency,
+      setMaxFrequency: mockSetMaxFrequency,
+      frequencyScale: 'linear' as const,
+      resetToDefaultTimeRange: mockResetToDefaultTimeRange,
+      resetToDefaultAmplitudeRange: mockResetToDefaultAmplitudeRange,
+      resetToDefaultFrequencyRange: mockResetToDefaultFrequencyRange,
+    };
   });
 
   describe('Basic Rendering', () => {
@@ -188,64 +172,80 @@ describe('FigureInteraction Component', () => {
   });
 
   describe('Seekbar Position', () => {
-    it('updates visible bar based on seekbar position', () => {
+    it('updates visible bar based on seekbar position', async () => {
       const audioBuffer = createMockAudioBuffer(10);
+      updateMockContexts(
+        { audioBuffer },
+        { seekbarPercent: 50 },
+        {},
+        { minTime: 0, maxTime: 10 }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          playerState={{ seekbarPercent: 50 }}
-          analyzeSettings={{ minTime: 0, maxTime: 10 }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
 
       const visibleBar = document.querySelector('.visibleBar') as HTMLElement;
-      expect(visibleBar.style.width).toBe('50%');
+      
+      await waitFor(() => {
+        expect(visibleBar.style.width).toBe('50%');
+      });
     });
 
-    it('handles seekbar position outside visible range', () => {
+    it('handles seekbar position outside visible range', async () => {
       const audioBuffer = createMockAudioBuffer(10);
+      updateMockContexts(
+        { audioBuffer },
+        { seekbarPercent: 80 },
+        {},
+        { minTime: 0, maxTime: 5 } // Visible range is 0-5s, seekbar at 8s
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          playerState={{ seekbarPercent: 80 }}
-          analyzeSettings={{ minTime: 0, maxTime: 5 }} // Visible range is 0-5s, seekbar at 8s
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
 
       const visibleBar = document.querySelector('.visibleBar') as HTMLElement;
-      expect(visibleBar.style.width).toBe('100%');
+      
+      await waitFor(() => {
+        expect(visibleBar.style.width).toBe('100%');
+      });
     });
 
-    it('handles seekbar position before visible range', () => {
+    it('handles seekbar position before visible range', async () => {
       const audioBuffer = createMockAudioBuffer(10);
+      updateMockContexts(
+        { audioBuffer },
+        { seekbarPercent: 10 },
+        {},
+        { minTime: 5, maxTime: 10 } // Visible range is 5-10s, seekbar at 1s
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          playerState={{ seekbarPercent: 10 }}
-          analyzeSettings={{ minTime: 5, maxTime: 10 }} // Visible range is 5-10s, seekbar at 1s
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
 
       const visibleBar = document.querySelector('.visibleBar') as HTMLElement;
-      expect(visibleBar.style.width).toBe('0%');
+      
+      await waitFor(() => {
+        expect(visibleBar.style.width).toBe('0%');
+      });
     });
   });
 
   describe('Mouse Interaction - Drag Selection', () => {
     it('starts drag selection on left mouse down', async () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -266,9 +266,10 @@ describe('FigureInteraction Component', () => {
 
     it('updates selection during mouse move', async () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -297,21 +298,15 @@ describe('FigureInteraction Component', () => {
 
     it('applies selection on mouse up', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinTime = jest.fn();
-      const mockSetMaxTime = jest.fn();
-      const mockAnalyze = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minTime: 0, maxTime: 10 }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: mockAnalyze }}
-          analyzeSettings={{ 
-            minTime: 0, 
-            maxTime: 10,
-            setMinTime: mockSetMinTime,
-            setMaxTime: mockSetMaxTime 
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -353,14 +348,15 @@ describe('FigureInteraction Component', () => {
   describe('Click to Seek', () => {
     it('seeks to clicked position for small movements', async () => {
       const audioBuffer = createMockAudioBuffer(10);
-      const mockSetSeekbarPercent = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minTime: 0, maxTime: 10 }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          playerState={{ setSeekbarPercent: mockSetSeekbarPercent }}
-          analyzeSettings={{ minTime: 0, maxTime: 10 }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -399,21 +395,10 @@ describe('FigureInteraction Component', () => {
   describe('Right Click Reset', () => {
     it('resets all ranges on right click', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockResetTime = jest.fn();
-      const mockResetAmplitude = jest.fn();
-      const mockResetFrequency = jest.fn();
-      const mockAnalyze = jest.fn();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeState={{ analyze: mockAnalyze }}
-          analyzeSettings={{
-            resetToDefaultTimeRange: mockResetTime,
-            resetToDefaultAmplitudeRange: mockResetAmplitude,
-            resetToDefaultFrequencyRange: mockResetFrequency,
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -425,28 +410,19 @@ describe('FigureInteraction Component', () => {
       });
 
       await waitFor(() => {
-        expect(mockResetTime).toHaveBeenCalled();
-        expect(mockResetAmplitude).toHaveBeenCalled();
-        expect(mockResetFrequency).toHaveBeenCalled();
+        expect(mockResetToDefaultTimeRange).toHaveBeenCalled();
+        expect(mockResetToDefaultAmplitudeRange).toHaveBeenCalled();
+        expect(mockResetToDefaultFrequencyRange).toHaveBeenCalled();
         expect(mockAnalyze).toHaveBeenCalled();
       });
     });
 
     it('resets only time range on Ctrl+right click', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockResetTime = jest.fn();
-      const mockResetAmplitude = jest.fn();
-      const mockResetFrequency = jest.fn();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            resetToDefaultTimeRange: mockResetTime,
-            resetToDefaultAmplitudeRange: mockResetAmplitude,
-            resetToDefaultFrequencyRange: mockResetFrequency,
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -459,27 +435,18 @@ describe('FigureInteraction Component', () => {
       });
 
       await waitFor(() => {
-        expect(mockResetTime).toHaveBeenCalled();
-        expect(mockResetAmplitude).not.toHaveBeenCalled();
-        expect(mockResetFrequency).not.toHaveBeenCalled();
+        expect(mockResetToDefaultTimeRange).toHaveBeenCalled();
+        expect(mockResetToDefaultAmplitudeRange).not.toHaveBeenCalled();
+        expect(mockResetToDefaultFrequencyRange).not.toHaveBeenCalled();
       });
     });
 
     it('resets value ranges on Shift+right click', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockResetTime = jest.fn();
-      const mockResetAmplitude = jest.fn();
-      const mockResetFrequency = jest.fn();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            resetToDefaultTimeRange: mockResetTime,
-            resetToDefaultAmplitudeRange: mockResetAmplitude,
-            resetToDefaultFrequencyRange: mockResetFrequency,
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -492,9 +459,9 @@ describe('FigureInteraction Component', () => {
       });
 
       await waitFor(() => {
-        expect(mockResetTime).not.toHaveBeenCalled();
-        expect(mockResetAmplitude).toHaveBeenCalled();
-        expect(mockResetFrequency).toHaveBeenCalled();
+        expect(mockResetToDefaultTimeRange).not.toHaveBeenCalled();
+        expect(mockResetToDefaultAmplitudeRange).toHaveBeenCalled();
+        expect(mockResetToDefaultFrequencyRange).toHaveBeenCalled();
       });
     });
   });
@@ -502,9 +469,10 @@ describe('FigureInteraction Component', () => {
   describe('Keyboard Modifiers', () => {
     it('constrains selection to time axis with Ctrl key', async () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -541,9 +509,10 @@ describe('FigureInteraction Component', () => {
 
     it('constrains selection to value axis with Shift key', async () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -582,19 +551,15 @@ describe('FigureInteraction Component', () => {
   describe('Waveform vs Spectrogram Mode', () => {
     it('updates amplitude range in waveform mode', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinAmplitude = jest.fn();
-      const mockSetMaxAmplitude = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minAmplitude: -1, maxAmplitude: 1 }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            minAmplitude: -1,
-            maxAmplitude: 1,
-            setMinAmplitude: mockSetMinAmplitude,
-            setMaxAmplitude: mockSetMaxAmplitude,
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -631,20 +596,15 @@ describe('FigureInteraction Component', () => {
 
     it('updates frequency range in spectrogram mode', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinFrequency = jest.fn();
-      const mockSetMaxFrequency = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minFrequency: 0, maxFrequency: 22050, frequencyScale: 'linear' }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            minFrequency: 0,
-            maxFrequency: 22050,
-            setMinFrequency: mockSetMinFrequency,
-            setMaxFrequency: mockSetMaxFrequency,
-            frequencyScale: 'linear',
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={false} />
         </TestWrapper>
       );
@@ -683,20 +643,15 @@ describe('FigureInteraction Component', () => {
   describe('Frequency Scale Handling', () => {
     it('handles linear frequency scale', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinFrequency = jest.fn();
-      const mockSetMaxFrequency = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minFrequency: 0, maxFrequency: 22050, frequencyScale: 'linear' }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            minFrequency: 0,
-            maxFrequency: 22050,
-            setMinFrequency: mockSetMinFrequency,
-            setMaxFrequency: mockSetMaxFrequency,
-            frequencyScale: 'linear',
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={false} />
         </TestWrapper>
       );
@@ -733,20 +688,15 @@ describe('FigureInteraction Component', () => {
 
     it('handles logarithmic frequency scale', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinFrequency = jest.fn();
-      const mockSetMaxFrequency = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minFrequency: 10, maxFrequency: 22050, frequencyScale: 'log' }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            minFrequency: 10,
-            maxFrequency: 22050,
-            setMinFrequency: mockSetMinFrequency,
-            setMaxFrequency: mockSetMaxFrequency,
-            frequencyScale: 'log',
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={false} />
         </TestWrapper>
       );
@@ -783,20 +733,15 @@ describe('FigureInteraction Component', () => {
 
     it('handles mel frequency scale', async () => {
       const audioBuffer = createMockAudioBuffer();
-      const mockSetMinFrequency = jest.fn();
-      const mockSetMaxFrequency = jest.fn();
+      updateMockContexts(
+        { audioBuffer },
+        {},
+        {},
+        { minFrequency: 0, maxFrequency: 22050, frequencyScale: 'mel' }
+      );
       
       render(
-        <TestWrapper 
-          vscodeState={{ audioBuffer }}
-          analyzeSettings={{
-            minFrequency: 0,
-            maxFrequency: 22050,
-            setMinFrequency: mockSetMinFrequency,
-            setMaxFrequency: mockSetMaxFrequency,
-            frequencyScale: 'mel',
-          }}
-        >
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={false} />
         </TestWrapper>
       );
@@ -853,9 +798,11 @@ describe('FigureInteraction Component', () => {
 
   describe('Edge Cases', () => {
     it('handles missing audio buffer gracefully', () => {
+      updateMockContexts({ audioBuffer: null });
+      
       expect(() => {
         render(
-          <TestWrapper vscodeState={{ audioBuffer: null }}>
+          <TestWrapper>
             <FigureInteraction onWaveformCanvas={true} />
           </TestWrapper>
         );
@@ -863,8 +810,10 @@ describe('FigureInteraction Component', () => {
     });
 
     it('handles mouse events without audio buffer', () => {
+      updateMockContexts({ audioBuffer: null });
+      
       render(
-        <TestWrapper vscodeState={{ audioBuffer: null }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -880,9 +829,10 @@ describe('FigureInteraction Component', () => {
 
     it('handles rapid mouse events', () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );
@@ -924,9 +874,10 @@ describe('FigureInteraction Component', () => {
 
     it('cleans up selection div on unmount', () => {
       const audioBuffer = createMockAudioBuffer();
+      updateMockContexts({ audioBuffer });
       
       const { unmount } = render(
-        <TestWrapper vscodeState={{ audioBuffer }}>
+        <TestWrapper>
           <FigureInteraction onWaveformCanvas={true} />
         </TestWrapper>
       );

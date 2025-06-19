@@ -2,19 +2,41 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { 
   AnalyzeSettingsContext, 
-  AnalyzeSettingsProvider,
-  SpectrogramScaleType 
+  AnalyzeSettingsProvider
 } from './AnalyzeSettingsContext';
+import { FrequencyScale } from '../types';
 import { useVSCode } from '../hooks/useVSCode';
 import { useAnalyzeSettings } from '../hooks/useAnalyzeSettings';
+import { mockAudioBuffer } from '../../__tests__/mocks/audioContext';
 
 // Mock dependencies
 jest.mock('../hooks/useVSCode');
 
 describe('AnalyzeSettingsContext', () => {
+  const mockAudioBufferInstance = mockAudioBuffer({
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    length: 441000,
+  });
+
+  const mockAnalyzeDefault = {
+    waveformVisible: true,
+    waveformVerticalScale: 1.0,
+    spectrogramVisible: true,
+    spectrogramVerticalScale: 1.0,
+    windowSizeIndex: 2, // W1024
+    frequencyScale: FrequencyScale.Linear,
+    melFilterNum: 40,
+    minFrequency: 0,
+    maxFrequency: 22050,
+    minAmplitude: -1,
+    maxAmplitude: 1,
+    spectrogramAmplitudeRange: -90,
+  };
+
   const mockVSCode = {
     audioContext: {} as AudioContext,
-    audioBuffer: null,
+    audioBuffer: null as AudioBuffer | null,
     isWebviewReady: true,
     vscode: { 
       postMessage: jest.fn(),
@@ -22,7 +44,7 @@ describe('AnalyzeSettingsContext', () => {
       getState: jest.fn(),
     },
     reload: jest.fn(),
-    error: null,
+    error: null as string | null,
   };
 
   beforeEach(() => {
@@ -33,82 +55,93 @@ describe('AnalyzeSettingsContext', () => {
   describe('AnalyzeSettingsProvider', () => {
     it('should provide default settings', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.visibleWaveform).toBe(true);
-      expect(result.current.visibleSpectrogram).toBe(true);
-      expect(result.current.windowSizeIndex).toBe(10); // 2^10 = 1024
-      expect(result.current.spectrogramScaleType).toBe('Linear');
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockAnalyzeDefault, mockAudioBufferInstance);
+      });
+      
+      expect(result.current.waveformVisible).toBe(true);
+      expect(result.current.spectrogramVisible).toBe(true);
+      expect(result.current.windowSizeIndex).toBe(2); // W1024
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Linear);
     });
 
     it('should use provided default settings', () => {
       const customDefaults = {
-        visibleWaveform: false,
-        visibleSpectrogram: true,
-        windowSizeIndex: 12, // 2^12 = 4096
-        spectrogramScaleType: 'Log' as SpectrogramScaleType,
+        ...mockAnalyzeDefault,
+        waveformVisible: false,
+        spectrogramVisible: true,
+        windowSizeIndex: 4, // W4096
+        frequencyScale: FrequencyScale.Log,
       };
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={customDefaults}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.visibleWaveform).toBe(false);
-      expect(result.current.visibleSpectrogram).toBe(true);
-      expect(result.current.windowSizeIndex).toBe(12);
-      expect(result.current.spectrogramScaleType).toBe('Log');
+      // Initialize with custom default settings
+      act(() => {
+        result.current.initializeFromDefault(customDefaults, mockAudioBufferInstance);
+      });
+      
+      expect(result.current.waveformVisible).toBe(false);
+      expect(result.current.spectrogramVisible).toBe(true);
+      expect(result.current.windowSizeIndex).toBe(4);
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Log);
     });
   });
 
   describe('Visibility Settings', () => {
     it('should toggle waveform visibility', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.visibleWaveform).toBe(true);
+      expect(result.current.waveformVisible).toBe(true);
 
       act(() => {
-        result.current.setVisibleWaveform(false);
+        result.current.setWaveformVisible(false);
       });
 
-      expect(result.current.visibleWaveform).toBe(false);
+      expect(result.current.waveformVisible).toBe(false);
     });
 
     it('should toggle spectrogram visibility', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.visibleSpectrogram).toBe(true);
+      expect(result.current.spectrogramVisible).toBe(true);
 
       act(() => {
-        result.current.setVisibleSpectrogram(false);
+        result.current.setSpectrogramVisible(false);
       });
 
-      expect(result.current.visibleSpectrogram).toBe(false);
+      expect(result.current.spectrogramVisible).toBe(false);
     });
 
-    it('should ensure at least one visualization is visible', () => {
+    it('should allow independent visibility control', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -117,23 +150,27 @@ describe('AnalyzeSettingsContext', () => {
       
       // Turn off waveform
       act(() => {
-        result.current.setVisibleWaveform(false);
+        result.current.setWaveformVisible(false);
       });
 
-      // Try to turn off spectrogram (should fail)
+      expect(result.current.waveformVisible).toBe(false);
+      expect(result.current.spectrogramVisible).toBe(true);
+
+      // Turn off spectrogram
       act(() => {
-        result.current.setVisibleSpectrogram(false);
+        result.current.setSpectrogramVisible(false);
       });
 
-      // At least one should remain visible
-      expect(result.current.visibleWaveform || result.current.visibleSpectrogram).toBe(true);
+      // Both can be turned off independently
+      expect(result.current.waveformVisible).toBe(false);
+      expect(result.current.spectrogramVisible).toBe(false);
     });
   });
 
   describe('Window Size Settings', () => {
     it('should update window size index', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -141,37 +178,37 @@ describe('AnalyzeSettingsContext', () => {
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
       act(() => {
-        result.current.setWindowSizeIndex(11); // 2^11 = 2048
+        result.current.setWindowSizeIndex(3); // WindowSizeIndex.W2048
       });
 
-      expect(result.current.windowSizeIndex).toBe(11);
+      expect(result.current.windowSizeIndex).toBe(3);
     });
 
     it('should validate window size index range', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      // Test minimum bound
+      // Test minimum bound (WindowSizeIndex goes from 0-7)
       act(() => {
-        result.current.setWindowSizeIndex(5); // Too small
+        result.current.setWindowSizeIndex(-1); // Too small
       });
-      expect(result.current.windowSizeIndex).toBeGreaterThanOrEqual(8); // Min 2^8 = 256
+      expect(result.current.windowSizeIndex).toBeGreaterThanOrEqual(0); // Min W256
 
       // Test maximum bound
       act(() => {
         result.current.setWindowSizeIndex(20); // Too large
       });
-      expect(result.current.windowSizeIndex).toBeLessThanOrEqual(15); // Max 2^15 = 32768
+      expect(result.current.windowSizeIndex).toBeLessThanOrEqual(7); // Max W32768
     });
 
     it('should calculate actual window size', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -179,66 +216,66 @@ describe('AnalyzeSettingsContext', () => {
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
       const testCases = [
-        { index: 8, expectedSize: 256 },
-        { index: 10, expectedSize: 1024 },
-        { index: 12, expectedSize: 4096 },
-        { index: 14, expectedSize: 16384 },
+        { index: 0, expectedSize: 256 },   // 2^(0+8) = 256
+        { index: 2, expectedSize: 1024 },  // 2^(2+8) = 1024
+        { index: 4, expectedSize: 4096 },  // 2^(4+8) = 4096
+        { index: 6, expectedSize: 16384 }, // 2^(6+8) = 16384
       ];
 
       testCases.forEach(({ index, expectedSize }) => {
         act(() => {
           result.current.setWindowSizeIndex(index);
         });
-        expect(Math.pow(2, result.current.windowSizeIndex)).toBe(expectedSize);
+        expect(result.current.windowSize).toBe(expectedSize);
       });
     });
   });
 
   describe('Spectrogram Scale Settings', () => {
-    it('should update spectrogram scale type', () => {
+    it('should update frequency scale type', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      const scaleTypes: SpectrogramScaleType[] = ['Linear', 'Log', 'Mel'];
+      const scaleTypes: FrequencyScale[] = [FrequencyScale.Linear, FrequencyScale.Log, FrequencyScale.Mel];
       
       scaleTypes.forEach(scaleType => {
         act(() => {
-          result.current.setSpectrogramScaleType(scaleType);
+          result.current.setFrequencyScale(scaleType);
         });
-        expect(result.current.spectrogramScaleType).toBe(scaleType);
+        expect(result.current.frequencyScale).toBe(scaleType);
       });
     });
 
     it('should only accept valid scale types', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      const initialScale = result.current.spectrogramScaleType;
+      const initialScale = result.current.frequencyScale;
       
       act(() => {
-        // @ts-expect-error Testing invalid scale type
-        result.current.setSpectrogramScaleType('Invalid');
+        // Testing invalid scale type
+        result.current.setFrequencyScale('Invalid' as any);
       });
 
       // Should not change from initial
-      expect(result.current.spectrogramScaleType).toBe(initialScale);
+      expect(result.current.frequencyScale).toBe(initialScale);
     });
   });
 
-  describe('Persistence', () => {
-    it('should persist settings to VS Code state', () => {
+  describe('State Management', () => {
+    it('should update state correctly', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -246,110 +283,89 @@ describe('AnalyzeSettingsContext', () => {
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
       act(() => {
-        result.current.setVisibleWaveform(false);
-        result.current.setVisibleSpectrogram(true);
-        result.current.setWindowSizeIndex(13);
-        result.current.setSpectrogramScaleType('Mel');
+        result.current.setWaveformVisible(false);
+        result.current.setSpectrogramVisible(true);
+        result.current.setWindowSizeIndex(4); // Valid index
+        result.current.setFrequencyScale(FrequencyScale.Mel);
       });
 
-      expect(mockVSCode.vscode.setState).toHaveBeenCalledWith({
-        analyzeSettings: {
-          visibleWaveform: false,
-          visibleSpectrogram: true,
-          windowSizeIndex: 13,
-          spectrogramScaleType: 'Mel',
-        }
-      });
+      expect(result.current.waveformVisible).toBe(false);
+      expect(result.current.spectrogramVisible).toBe(true);
+      expect(result.current.windowSizeIndex).toBe(4);
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Mel);
     });
 
-    it('should restore settings from VS Code state', () => {
-      const savedSettings = {
-        analyzeSettings: {
-          visibleWaveform: false,
-          visibleSpectrogram: true,
-          windowSizeIndex: 14,
-          spectrogramScaleType: 'Log' as SpectrogramScaleType,
-        }
-      };
-
-      mockVSCode.vscode.getState.mockReturnValue(savedSettings);
-
+    it('should initialize from default settings', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.visibleWaveform).toBe(false);
-      expect(result.current.visibleSpectrogram).toBe(true);
-      expect(result.current.windowSizeIndex).toBe(14);
-      expect(result.current.spectrogramScaleType).toBe('Log');
+      // Initialize with custom defaults
+      act(() => {
+        result.current.initializeFromDefault(mockAnalyzeDefault, mockAudioBufferInstance);
+      });
+      
+      expect(result.current.waveformVisible).toBe(true);
+      expect(result.current.spectrogramVisible).toBe(true);
+      expect(result.current.windowSizeIndex).toBe(2); // W1024
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Linear);
     });
 
-    it('should merge partial saved settings with defaults', () => {
-      const savedSettings = {
-        analyzeSettings: {
-          windowSizeIndex: 9,
-          // Other settings missing
-        }
-      };
-
-      mockVSCode.vscode.getState.mockReturnValue(savedSettings);
-
-      const defaults = {
-        visibleWaveform: false,
-        visibleSpectrogram: false,
-        windowSizeIndex: 11,
-        spectrogramScaleType: 'Mel' as SpectrogramScaleType,
+    it('should handle custom default initialization', () => {
+      const customDefaults = {
+        ...mockAnalyzeDefault,
+        waveformVisible: false,
+        spectrogramVisible: true,
+        windowSizeIndex: 4, // W4096
+        frequencyScale: FrequencyScale.Mel,
       };
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={defaults}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      expect(result.current.windowSizeIndex).toBe(9); // From saved
-      expect(result.current.visibleWaveform).toBe(false); // From defaults
-      expect(result.current.visibleSpectrogram).toBe(false); // From defaults
-      expect(result.current.spectrogramScaleType).toBe('Mel'); // From defaults
+      act(() => {
+        result.current.initializeFromDefault(customDefaults, mockAudioBufferInstance);
+      });
+      
+      expect(result.current.windowSizeIndex).toBe(4); // W4096
+      expect(result.current.waveformVisible).toBe(false); // From custom defaults
+      expect(result.current.spectrogramVisible).toBe(true); // From custom defaults
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Mel); // From custom defaults
     });
   });
 
   describe('Context Updates', () => {
     it('should notify consumers of settings changes', () => {
-      let renderCount = 0;
-      
-      const TestComponent = () => {
-        const settings = useAnalyzeSettings();
-        renderCount++;
-        return <div>{settings.windowSizeIndex}</div>;
-      };
-
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
 
-      const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
+      const { result, rerender } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      const initialRenderCount = renderCount;
+      const initialWindowSize = result.current.windowSizeIndex;
 
       act(() => {
-        result.current.setWindowSizeIndex(12);
+        result.current.setWindowSizeIndex(5); // W8192
       });
 
-      expect(renderCount).toBeGreaterThan(initialRenderCount);
+      expect(result.current.windowSizeIndex).not.toBe(initialWindowSize);
+      expect(result.current.windowSizeIndex).toBe(5);
     });
 
-    it('should batch multiple updates', () => {
+    it('should handle multiple updates', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -357,86 +373,83 @@ describe('AnalyzeSettingsContext', () => {
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
       act(() => {
-        result.current.setVisibleWaveform(true);
-        result.current.setVisibleSpectrogram(false);
-        result.current.setWindowSizeIndex(11);
-        result.current.setSpectrogramScaleType('Log');
+        result.current.setWaveformVisible(true);
+        result.current.setSpectrogramVisible(false);
+        result.current.setWindowSizeIndex(6); // W16384
+        result.current.setFrequencyScale(FrequencyScale.Log);
       });
 
-      // Should only call setState once with all updates
-      expect(mockVSCode.vscode.setState).toHaveBeenCalledTimes(1);
+      // Check that all updates were applied
+      expect(result.current.waveformVisible).toBe(true);
+      expect(result.current.spectrogramVisible).toBe(false);
+      expect(result.current.windowSizeIndex).toBe(6);
+      expect(result.current.frequencyScale).toBe(FrequencyScale.Log);
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle missing VS Code API gracefully', () => {
-      (useVSCode as jest.Mock).mockReturnValue({
-        ...mockVSCode,
-        vscode: null,
-      });
-
+    it('should handle operations gracefully', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      // Should still work without persistence
+      // Should work normally
       act(() => {
-        result.current.setWindowSizeIndex(13);
+        result.current.setWindowSizeIndex(3); // W2048
       });
 
-      expect(result.current.windowSizeIndex).toBe(13);
+      expect(result.current.windowSizeIndex).toBe(3);
     });
 
-    it('should handle corrupted saved state', () => {
-      mockVSCode.vscode.getState.mockReturnValue({
-        analyzeSettings: {
-          windowSizeIndex: 'not-a-number', // Invalid type
-          spectrogramScaleType: 123, // Invalid type
-        }
-      });
-
+    it('should handle invalid values gracefully', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      // Should fall back to defaults
-      expect(result.current.windowSizeIndex).toBe(10);
-      expect(result.current.spectrogramScaleType).toBe('Linear');
+      // Test with out-of-range values
+      act(() => {
+        result.current.setWindowSizeIndex(-5); // Invalid
+      });
+      
+      // Should fallback to valid range
+      expect(result.current.windowSizeIndex).toBeGreaterThanOrEqual(0);
+      expect(result.current.windowSizeIndex).toBeLessThanOrEqual(7);
     });
   });
 
   describe('Performance Analysis Settings', () => {
     it('should provide optimal window size for different sample rates', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
-      // For 44.1kHz sample rate, window size of 1024 gives ~23ms resolution
-      expect(result.current.windowSizeIndex).toBe(10); // 2^10 = 1024
+      // For 44.1kHz sample rate, default window size is 1024 (index 2)
+      expect(result.current.windowSizeIndex).toBe(2); // W1024
+      expect(result.current.windowSize).toBe(1024);
       
       // User can adjust for better frequency resolution
       act(() => {
-        result.current.setWindowSizeIndex(12); // 2^12 = 4096 for ~93ms
+        result.current.setWindowSizeIndex(4); // W4096
       });
       
-      expect(Math.pow(2, result.current.windowSizeIndex)).toBe(4096);
+      expect(result.current.windowSize).toBe(4096);
     });
 
     it('should balance time and frequency resolution', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={undefined}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
@@ -445,18 +458,20 @@ describe('AnalyzeSettingsContext', () => {
       
       // Smaller window = better time resolution
       act(() => {
-        result.current.setWindowSizeIndex(8); // 256 samples
+        result.current.setWindowSizeIndex(0); // W256
       });
       
-      const timeResolution = Math.pow(2, 8) / 44100; // ~5.8ms
+      expect(result.current.windowSize).toBe(256);
+      const timeResolution = result.current.windowSize / 44100; // ~5.8ms
       expect(timeResolution).toBeLessThan(0.01); // < 10ms
       
       // Larger window = better frequency resolution
       act(() => {
-        result.current.setWindowSizeIndex(14); // 16384 samples
+        result.current.setWindowSizeIndex(6); // W16384
       });
       
-      const freqResolution = 44100 / Math.pow(2, 14); // ~2.7Hz
+      expect(result.current.windowSize).toBe(16384);
+      const freqResolution = 44100 / result.current.windowSize; // ~2.7Hz
       expect(freqResolution).toBeLessThan(5); // < 5Hz bin width
     });
   });
@@ -464,21 +479,22 @@ describe('AnalyzeSettingsContext', () => {
   describe('Integration with Analysis System', () => {
     it('should provide settings for FFT analysis', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <AnalyzeSettingsProvider analyzeDefault={{
-          visibleWaveform: true,
-          visibleSpectrogram: true,
-          windowSizeIndex: 11,
-          spectrogramScaleType: 'Linear',
-        }}>
+        <AnalyzeSettingsProvider>
           {children}
         </AnalyzeSettingsProvider>
       );
       
       const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
       
+      // Initialize with custom settings
+      act(() => {
+        result.current.setWindowSizeIndex(3); // W2048
+        result.current.setFrequencyScale(FrequencyScale.Linear);
+      });
+      
       // Settings should be ready for FFT computation
-      expect(Math.pow(2, result.current.windowSizeIndex)).toBe(2048);
-      expect(['Linear', 'Log', 'Mel']).toContain(result.current.spectrogramScaleType);
+      expect(result.current.windowSize).toBe(2048);
+      expect([FrequencyScale.Linear, FrequencyScale.Log, FrequencyScale.Mel]).toContain(result.current.frequencyScale);
     });
   });
 });

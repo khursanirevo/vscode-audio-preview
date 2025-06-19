@@ -1,12 +1,11 @@
 import React from 'react';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render } from '@testing-library/react';
 import { PlayerSettingsContext, PlayerSettingsProvider } from './PlayerSettingsContext';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import { mockAudioBuffer } from '../../__tests__/mocks/audioContext';
 
 describe('PlayerSettingsContext', () => {
   const mockAudioBufferInstance = mockAudioBuffer({
-    duration: 10,
     sampleRate: 44100,
     numberOfChannels: 2,
     length: 441000,
@@ -29,12 +28,17 @@ describe('PlayerSettingsContext', () => {
   describe('PlayerSettingsProvider', () => {
     it('should provide default settings', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       expect(result.current.sampleRate).toBe(44100);
       expect(result.current.enableHpf).toBe(false);
@@ -45,7 +49,7 @@ describe('PlayerSettingsContext', () => {
 
     it('should handle undefined defaults', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={undefined}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
@@ -60,12 +64,17 @@ describe('PlayerSettingsContext', () => {
   describe('Settings Management', () => {
     it('should update volume unit setting', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       expect(result.current.volumeUnitDb).toBe(false);
 
@@ -78,12 +87,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should update volume in dB', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setInitialVolumeDb(-12);
@@ -94,12 +108,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should update volume in linear scale', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setInitialVolume(75);
@@ -110,12 +129,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should validate volume dB range', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Test upper bound (0 dB max)
       act(() => {
@@ -132,12 +156,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should validate linear volume range', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Test upper bound (100 max)
       act(() => {
@@ -156,12 +185,17 @@ describe('PlayerSettingsContext', () => {
   describe('Filter Settings', () => {
     it('should enable/disable high-pass filter', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setEnableHpf(true);
@@ -172,12 +206,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should set high-pass filter frequency', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setHpfFrequency(120);
@@ -188,12 +227,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should enable/disable low-pass filter', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setEnableLpf(true);
@@ -204,12 +248,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should set low-pass filter frequency', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setLpfFrequency(12000);
@@ -220,12 +269,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should validate filter frequency ranges', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Test negative frequency
       act(() => {
@@ -244,12 +298,17 @@ describe('PlayerSettingsContext', () => {
   describe('Playback Settings', () => {
     it('should enable/disable spacebar play', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setEnableSpacekeyPlay(false);
@@ -260,12 +319,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should enable/disable seek to play', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setEnableSeekToPlay(false);
@@ -276,12 +340,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should toggle filter frequency matching', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       act(() => {
         result.current.setMatchFilterFrequencyToSpectrogram(false);
@@ -294,7 +363,7 @@ describe('PlayerSettingsContext', () => {
   describe('Initialization', () => {
     it('should initialize from default settings', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={undefined}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
@@ -321,13 +390,12 @@ describe('PlayerSettingsContext', () => {
     it('should sync sample rate with audio buffer', () => {
       const customBuffer = mockAudioBuffer({
         sampleRate: 48000,
-        duration: 5,
         numberOfChannels: 1,
         length: 240000,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
@@ -345,25 +413,30 @@ describe('PlayerSettingsContext', () => {
   describe('State Management', () => {
     it('should notify consumers of settings changes', () => {
       let renderCount = 0;
+      let settingsRef: any = null;
       
       const TestComponent = () => {
         const settings = usePlayerSettings();
+        settingsRef = settings;
         renderCount++;
-        return <div>{settings.enableHpf}</div>;
+        return <div>{settings.enableHpf.toString()}</div>;
       };
 
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
-          {children}
+      const { rerender } = render(
+        <PlayerSettingsProvider>
+          <TestComponent />
         </PlayerSettingsProvider>
       );
-
-      const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        settingsRef.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       const initialRenderCount = renderCount;
 
       act(() => {
-        result.current.setEnableHpf(true);
+        settingsRef.setEnableHpf(true);
       });
 
       expect(renderCount).toBeGreaterThan(initialRenderCount);
@@ -371,12 +444,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should maintain state consistency', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Make multiple changes
       act(() => {
@@ -396,12 +474,17 @@ describe('PlayerSettingsContext', () => {
   describe('Volume Conversion', () => {
     it('should handle dB to linear volume conversion', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Set volume in dB
       act(() => {
@@ -416,12 +499,17 @@ describe('PlayerSettingsContext', () => {
 
     it('should handle edge cases in volume conversion', () => {
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <PlayerSettingsProvider playerDefault={mockPlayerDefault}>
+        <PlayerSettingsProvider>
           {children}
         </PlayerSettingsProvider>
       );
       
       const { result } = renderHook(() => usePlayerSettings(), { wrapper });
+      
+      // Initialize with default settings
+      act(() => {
+        result.current.initializeFromDefault(mockPlayerDefault, mockAudioBufferInstance);
+      });
       
       // Test 0 dB (maximum)
       act(() => {

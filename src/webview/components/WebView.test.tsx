@@ -1,11 +1,18 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { WebView, WebViewProps } from './WebView';
-import { mockVSCodeApi } from '../../__tests__/mocks/vscode';
-import { createMockDecoder } from '../../__tests__/mocks/decoder';
-import { createMockAudioContext } from '../../__tests__/mocks/audioContext';
+import vscode from '../../__tests__/mocks/vscode';
+import MockDecoder from '../../__tests__/mocks/decoder';
+import { mockAudioContext } from '../../__tests__/mocks/audioContext';
 
 // Mock the VSCode API
+const mockVSCodeApi = {
+  postMessage: jest.fn(),
+  setState: jest.fn(),
+  getState: jest.fn(),
+  onMessage: jest.fn()
+};
+
 (global as any).acquireVsCodeApi = () => mockVSCodeApi;
 
 // Mock WebViewInner component
@@ -36,7 +43,7 @@ describe('WebView Component', () => {
 
     // Reset mocks
     mockVSCodeApi.postMessage.mockClear();
-    mockVSCodeApi.onMessage = jest.fn();
+    mockVSCodeApi.onMessage.mockClear();
     mockCreateAudioContext.mockClear();
     mockCreateDecoder.mockClear();
   });
@@ -61,11 +68,11 @@ describe('WebView Component', () => {
   describe('Provider Hierarchy', () => {
     it('maintains correct provider nesting order', async () => {
       // Mock successful data flow
-      const mockDecoder = createMockDecoder();
-      const mockAudioContext = createMockAudioContext();
+      const mockDecoder = await MockDecoder.create(new Uint8Array([1, 2, 3]));
+      const mockAudioContextInstance = mockAudioContext();
       
       mockCreateDecoder.mockResolvedValue(mockDecoder);
-      mockCreateAudioContext.mockReturnValue(mockAudioContext);
+      mockCreateAudioContext.mockReturnValue(mockAudioContextInstance as any);
 
       render(<WebView {...defaultProps} />);
 
@@ -165,17 +172,16 @@ describe('WebView Component', () => {
 
   describe('Audio Processing Flow', () => {
     it('processes audio data correctly', async () => {
-      const mockDecoder = createMockDecoder({
-        numChannels: 2,
-        sampleRate: 44100,
-        length: 1000,
-        duration: 1.0,
-        fileSize: 4000,
-        format: 'WAV',
-        encoding: 'PCM'
-      });
+      const mockDecoder = await MockDecoder.create(new Uint8Array([1, 2, 3]));
+      mockDecoder.numChannels = 2;
+      mockDecoder.sampleRate = 44100;
+      mockDecoder.length = 1000;
+      mockDecoder.samples = [
+        new Float32Array(1000).fill(0.5),
+        new Float32Array(1000).fill(-0.5)
+      ];
       
-      const mockAudioContext = createMockAudioContext();
+      const mockAudioContextInstance = mockAudioContext();
       const mockAudioBuffer = {
         numberOfChannels: 2,
         length: 1000,
@@ -183,9 +189,9 @@ describe('WebView Component', () => {
         copyToChannel: jest.fn(),
       } as any;
 
-      mockAudioContext.createBuffer.mockReturnValue(mockAudioBuffer);
+      mockAudioContextInstance.createBuffer = jest.fn().mockReturnValue(mockAudioBuffer);
       mockCreateDecoder.mockResolvedValue(mockDecoder);
-      mockCreateAudioContext.mockReturnValue(mockAudioContext);
+      mockCreateAudioContext.mockReturnValue(mockAudioContextInstance as any);
 
       render(<WebView {...defaultProps} />);
 
@@ -218,7 +224,7 @@ describe('WebView Component', () => {
         expect(mockDecoder.readAudioInfo).toHaveBeenCalled();
         expect(mockDecoder.decode).toHaveBeenCalled();
         expect(mockCreateAudioContext).toHaveBeenCalledWith(44100);
-        expect(mockAudioContext.createBuffer).toHaveBeenCalledWith(2, 1000, 44100);
+        expect(mockAudioContextInstance.createBuffer).toHaveBeenCalledWith(2, 1000, 44100);
         expect(mockDecoder.dispose).toHaveBeenCalled();
       }, { timeout: 5000 });
 
@@ -231,7 +237,7 @@ describe('WebView Component', () => {
     });
 
     it('shows correct loading states during processing', async () => {
-      const mockDecoder = createMockDecoder();
+      const mockDecoder = await MockDecoder.create(new Uint8Array([1, 2, 3]));
       let resolveDecoder: (value: any) => void;
       const decoderPromise = new Promise((resolve) => {
         resolveDecoder = resolve;
@@ -287,11 +293,11 @@ describe('WebView Component', () => {
     });
 
     it('nests providers in correct order', async () => {
-      const mockDecoder = createMockDecoder();
-      const mockAudioContext = createMockAudioContext();
+      const mockDecoder = await MockDecoder.create(new Uint8Array([1, 2, 3]));
+      const mockAudioContextInstance = mockAudioContext();
       
       mockCreateDecoder.mockResolvedValue(mockDecoder);
-      mockCreateAudioContext.mockReturnValue(mockAudioContext);
+      mockCreateAudioContext.mockReturnValue(mockAudioContextInstance as any);
 
       render(<WebView {...defaultProps} />);
 
