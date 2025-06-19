@@ -35,8 +35,8 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize VS Code API
-  const vscode = acquireVsCodeApi();
+  // Initialize VS Code API only once
+  const [vscode] = useState(() => acquireVsCodeApi());
 
   const postMessage = useCallback<PostMessage>((message: WebviewMessage) => {
     vscode.postMessage(message);
