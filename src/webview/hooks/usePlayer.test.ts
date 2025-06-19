@@ -1,9 +1,9 @@
-import { renderHook } from '@testing-library/react';
-import { usePlayer } from './usePlayer';
-import { PlayerContext } from '../contexts/PlayerContext';
-import React from 'react';
+import { renderHook } from "@testing-library/react";
+import { usePlayer } from "./usePlayer";
+import { PlayerContext } from "../contexts/PlayerContext";
+import React from "react";
 
-describe('usePlayer Hook', () => {
+describe("usePlayer Hook", () => {
   const mockPlayerValue = {
     isPlaying: false,
     currentSec: 0,
@@ -17,9 +17,13 @@ describe('usePlayer Hook', () => {
     setSeekbarPercent: jest.fn(),
   };
 
-  it('should return Player context value when within provider', () => {
+  it("should return Player context value when within provider", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerContext.Provider, { value: mockPlayerValue }, children);
+      React.createElement(
+        PlayerContext.Provider,
+        { value: mockPlayerValue },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayer(), { wrapper });
 
@@ -30,30 +34,34 @@ describe('usePlayer Hook', () => {
     expect(result.current.currentSec).toBe(0);
   });
 
-  it('should throw error when used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+  it("should throw error when used outside provider", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => usePlayer());
-    }).toThrow('usePlayer must be used within a PlayerProvider');
+    }).toThrow("usePlayer must be used within a PlayerProvider");
 
     consoleError.mockRestore();
   });
 
-  it('should throw error with undefined context', () => {
+  it("should throw error with undefined context", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerContext.Provider, { value: undefined }, children);
+      React.createElement(
+        PlayerContext.Provider,
+        { value: undefined },
+        children,
+      );
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => usePlayer(), { wrapper });
-    }).toThrow('usePlayer must be used within a PlayerProvider');
+    }).toThrow("usePlayer must be used within a PlayerProvider");
 
     consoleError.mockRestore();
   });
 
-  it('should provide access to all player functionality', () => {
+  it("should provide access to all player functionality", () => {
     const fullContext = {
       isPlaying: true,
       currentSec: 5.5,
@@ -68,7 +76,11 @@ describe('usePlayer Hook', () => {
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerContext.Provider, { value: fullContext }, children);
+      React.createElement(
+        PlayerContext.Provider,
+        { value: fullContext },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayer(), { wrapper });
 
@@ -77,14 +89,14 @@ describe('usePlayer Hook', () => {
     expect(result.current.volume).toBe(0.8);
     expect(result.current.seekbarValue).toBe(50);
     expect(result.current.seekbarPercent).toBe(50);
-    expect(typeof result.current.play).toBe('function');
-    expect(typeof result.current.pause).toBe('function');
-    expect(typeof result.current.setVolume).toBe('function');
-    expect(typeof result.current.onSeekbarInput).toBe('function');
-    expect(typeof result.current.setSeekbarPercent).toBe('function');
+    expect(typeof result.current.play).toBe("function");
+    expect(typeof result.current.pause).toBe("function");
+    expect(typeof result.current.setVolume).toBe("function");
+    expect(typeof result.current.onSeekbarInput).toBe("function");
+    expect(typeof result.current.setSeekbarPercent).toBe("function");
   });
 
-  it('should maintain function references', () => {
+  it("should maintain function references", () => {
     const play = jest.fn();
     const pause = jest.fn();
     const setVolume = jest.fn();

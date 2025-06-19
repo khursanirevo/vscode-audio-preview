@@ -19,14 +19,14 @@ export class MockAudioBuffer {
     this.length = options.length;
     this.sampleRate = options.sampleRate;
     this.duration = options.length / options.sampleRate;
-    
+
     // Initialize channel data with test patterns
     this._channelData = [];
     for (let i = 0; i < this.numberOfChannels; i++) {
       const data = new Float32Array(this.length);
       // Create a simple sine wave pattern for testing
       for (let j = 0; j < this.length; j++) {
-        data[j] = Math.sin(2 * Math.PI * 440 * j / this.sampleRate) * 0.5;
+        data[j] = Math.sin((2 * Math.PI * 440 * j) / this.sampleRate) * 0.5;
       }
       this._channelData.push(data);
     }
@@ -39,21 +39,29 @@ export class MockAudioBuffer {
     return this._channelData[channel];
   }
 
-  copyFromChannel(destination: Float32Array, channelNumber: number, startInChannel?: number): void {
+  copyFromChannel(
+    destination: Float32Array,
+    channelNumber: number,
+    startInChannel?: number,
+  ): void {
     const channelData = this.getChannelData(channelNumber);
     const start = startInChannel || 0;
     const end = Math.min(start + destination.length, channelData.length);
-    
+
     for (let i = 0; i < end - start; i++) {
       destination[i] = channelData[start + i];
     }
   }
 
-  copyToChannel(source: Float32Array, channelNumber: number, startInChannel?: number): void {
+  copyToChannel(
+    source: Float32Array,
+    channelNumber: number,
+    startInChannel?: number,
+  ): void {
     const channelData = this.getChannelData(channelNumber);
     const start = startInChannel || 0;
     const end = Math.min(start + source.length, channelData.length);
-    
+
     for (let i = 0; i < end - start; i++) {
       channelData[start + i] = source[i];
     }
@@ -66,22 +74,30 @@ export class MockAudioNode {
   public numberOfInputs: number = 1;
   public numberOfOutputs: number = 1;
   public channelCount: number = 2;
-  public channelCountMode: ChannelCountMode = 'max';
-  public channelInterpretation: ChannelInterpretation = 'speakers';
+  public channelCountMode: ChannelCountMode = "max";
+  public channelInterpretation: ChannelInterpretation = "speakers";
   private _connectedNodes: MockAudioNode[] = [];
 
   constructor(context: MockAudioContext | MockOfflineAudioContext) {
     this.context = context;
   }
 
-  connect(destination: MockAudioNode | MockAudioParam, output?: number, input?: number): MockAudioNode {
+  connect(
+    destination: MockAudioNode | MockAudioParam,
+    _output?: number,
+    _input?: number,
+  ): MockAudioNode {
     if (destination instanceof MockAudioNode) {
       this._connectedNodes.push(destination);
     }
     return destination as MockAudioNode;
   }
 
-  disconnect(destination?: MockAudioNode | MockAudioParam, output?: number, input?: number): void {
+  disconnect(
+    destination?: MockAudioNode | MockAudioParam,
+    _output?: number,
+    _input?: number,
+  ): void {
     if (destination instanceof MockAudioNode) {
       const index = this._connectedNodes.indexOf(destination);
       if (index > -1) {
@@ -92,9 +108,17 @@ export class MockAudioNode {
     }
   }
 
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void {}
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject): void {}
-  dispatchEvent(event: Event): boolean { return true; }
+  addEventListener(
+    _type: string,
+    _listener: EventListenerOrEventListenerObject,
+  ): void {}
+  removeEventListener(
+    _type: string,
+    _listener: EventListenerOrEventListenerObject,
+  ): void {}
+  dispatchEvent(_event: Event): boolean {
+    return true;
+  }
 }
 
 // Mock AudioParam
@@ -104,38 +128,49 @@ export class MockAudioParam {
   public minValue: number = -3.4028235e38;
   public maxValue: number = 3.4028235e38;
 
-  setValueAtTime(value: number, startTime: number): MockAudioParam {
+  setValueAtTime(value: number, _startTime: number): MockAudioParam {
     this.value = value;
     return this;
   }
 
-  linearRampToValueAtTime(value: number, endTime: number): MockAudioParam {
+  linearRampToValueAtTime(value: number, _endTime: number): MockAudioParam {
     this.value = value;
     return this;
   }
 
-  exponentialRampToValueAtTime(value: number, endTime: number): MockAudioParam {
+  exponentialRampToValueAtTime(
+    value: number,
+    _endTime: number,
+  ): MockAudioParam {
     this.value = value;
     return this;
   }
 
-  setTargetAtTime(target: number, startTime: number, timeConstant: number): MockAudioParam {
+  setTargetAtTime(
+    target: number,
+    _startTime: number,
+    _timeConstant: number,
+  ): MockAudioParam {
     this.value = target;
     return this;
   }
 
-  setValueCurveAtTime(values: number[] | Float32Array, startTime: number, duration: number): MockAudioParam {
+  setValueCurveAtTime(
+    values: number[] | Float32Array,
+    _startTime: number,
+    _duration: number,
+  ): MockAudioParam {
     if (values.length > 0) {
       this.value = values[values.length - 1];
     }
     return this;
   }
 
-  cancelScheduledValues(startTime: number): MockAudioParam {
+  cancelScheduledValues(_startTime: number): MockAudioParam {
     return this;
   }
 
-  cancelAndHoldAtTime(cancelTime: number): MockAudioParam {
+  cancelAndHoldAtTime(_cancelTime: number): MockAudioParam {
     return this;
   }
 }
@@ -156,7 +191,7 @@ export class MockBiquadFilterNode extends MockAudioNode {
   public detune: MockAudioParam;
   public Q: MockAudioParam;
   public gain: MockAudioParam;
-  public type: BiquadFilterType = 'lowpass';
+  public type: BiquadFilterType = "lowpass";
 
   constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
@@ -168,7 +203,11 @@ export class MockBiquadFilterNode extends MockAudioNode {
     this.gain = new MockAudioParam();
   }
 
-  getFrequencyResponse(frequencyHz: Float32Array, magResponse: Float32Array, phaseResponse: Float32Array): void {
+  getFrequencyResponse(
+    frequencyHz: Float32Array,
+    magResponse: Float32Array,
+    phaseResponse: Float32Array,
+  ): void {
     // Simple mock implementation
     for (let i = 0; i < frequencyHz.length; i++) {
       magResponse[i] = 1.0;
@@ -184,7 +223,8 @@ export class MockAudioBufferSourceNode extends MockAudioNode {
   public loopEnd: number = 0;
   public loopStart: number = 0;
   public playbackRate: MockAudioParam;
-  public onended: ((this: AudioBufferSourceNode, ev: Event) => any) | null = null;
+  public onended: ((this: AudioBufferSourceNode, ev: Event) => any) | null =
+    null;
 
   constructor(context: MockAudioContext | MockOfflineAudioContext) {
     super(context);
@@ -193,16 +233,16 @@ export class MockAudioBufferSourceNode extends MockAudioNode {
     this.playbackRate.value = 1;
   }
 
-  start(when?: number, offset?: number, duration?: number): void {
+  start(_when?: number, _offset?: number, _duration?: number): void {
     // Simulate async playback completion
     setTimeout(() => {
       if (this.onended) {
-        this.onended.call(this as any, new Event('ended'));
+        this.onended.call(this as any, new Event("ended"));
       }
     }, 100);
   }
 
-  stop(when?: number): void {}
+  stop(_when?: number): void {}
 }
 
 export class MockAnalyserNode extends MockAudioNode {
@@ -233,7 +273,9 @@ export class MockAnalyserNode extends MockAudioNode {
   getFloatFrequencyData(array: Float32Array): void {
     // Fill with mock frequency data in dB
     for (let i = 0; i < array.length && i < this.frequencyBinCount; i++) {
-      array[i] = this.minDecibels + Math.random() * (this.maxDecibels - this.minDecibels);
+      array[i] =
+        this.minDecibels +
+        Math.random() * (this.maxDecibels - this.minDecibels);
     }
   }
 
@@ -250,7 +292,7 @@ export class MockOfflineAudioContext {
   public sampleRate: number;
   public currentTime: number = 0;
   public listener: any = {};
-  public state: AudioContextState = 'running';
+  public state: AudioContextState = "running";
   public destination: MockAudioNode;
   public length: number;
 
@@ -268,7 +310,11 @@ export class MockOfflineAudioContext {
     return new MockBiquadFilterNode(this);
   }
 
-  createBuffer(numberOfChannels: number, length: number, sampleRate: number): MockAudioBuffer {
+  createBuffer(
+    numberOfChannels: number,
+    length: number,
+    sampleRate: number,
+  ): MockAudioBuffer {
     return new MockAudioBuffer({ numberOfChannels, length, sampleRate });
   }
 
@@ -280,41 +326,53 @@ export class MockOfflineAudioContext {
     return new MockGainNode(this);
   }
 
-  decodeAudioData(audioData: ArrayBuffer): Promise<MockAudioBuffer> {
+  decodeAudioData(_audioData: ArrayBuffer): Promise<MockAudioBuffer> {
     // Simulate decoding with a mock buffer
-    return Promise.resolve(new MockAudioBuffer({
-      numberOfChannels: 2,
-      length: 44100,
-      sampleRate: 44100
-    }));
+    return Promise.resolve(
+      new MockAudioBuffer({
+        numberOfChannels: 2,
+        length: 44100,
+        sampleRate: 44100,
+      }),
+    );
   }
 
   startRendering(): Promise<MockAudioBuffer> {
-    return Promise.resolve(new MockAudioBuffer({
-      numberOfChannels: 2,
-      length: this.length,
-      sampleRate: this.sampleRate
-    }));
+    return Promise.resolve(
+      new MockAudioBuffer({
+        numberOfChannels: 2,
+        length: this.length,
+        sampleRate: this.sampleRate,
+      }),
+    );
   }
 
   close(): Promise<void> {
-    this.state = 'closed';
+    this.state = "closed";
     return Promise.resolve();
   }
 
   resume(): Promise<void> {
-    this.state = 'running';
+    this.state = "running";
     return Promise.resolve();
   }
 
   suspend(): Promise<void> {
-    this.state = 'suspended';
+    this.state = "suspended";
     return Promise.resolve();
   }
 
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void {}
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject): void {}
-  dispatchEvent(event: Event): boolean { return true; }
+  addEventListener(
+    _type: string,
+    _listener: EventListenerOrEventListenerObject,
+  ): void {}
+  removeEventListener(
+    _type: string,
+    _listener: EventListenerOrEventListenerObject,
+  ): void {}
+  dispatchEvent(_event: Event): boolean {
+    return true;
+  }
 }
 
 // Mock AudioContext (extends OfflineAudioContext for simplicity)
@@ -330,7 +388,7 @@ export class MockAudioContext extends MockOfflineAudioContext {
   getOutputTimestamp(): AudioTimestamp {
     return {
       contextTime: this.currentTime,
-      performanceTime: performance.now()
+      performanceTime: performance.now(),
     };
   }
 }
@@ -365,10 +423,14 @@ export function cleanupAudioContextMocks() {
 // Factory functions for easier mocking
 export const mockAudioContext = () => {
   const ctx = new MockAudioContext();
-  jest.spyOn(ctx, 'createGain').mockReturnValue(new MockGainNode(ctx));
-  jest.spyOn(ctx, 'createBiquadFilter').mockReturnValue(new MockBiquadFilterNode(ctx));
-  jest.spyOn(ctx, 'createBufferSource').mockReturnValue(new MockAudioBufferSourceNode(ctx));
-  jest.spyOn(ctx, 'createAnalyser').mockReturnValue(new MockAnalyserNode(ctx));
+  jest.spyOn(ctx, "createGain").mockReturnValue(new MockGainNode(ctx));
+  jest
+    .spyOn(ctx, "createBiquadFilter")
+    .mockReturnValue(new MockBiquadFilterNode(ctx));
+  jest
+    .spyOn(ctx, "createBufferSource")
+    .mockReturnValue(new MockAudioBufferSourceNode(ctx));
+  jest.spyOn(ctx, "createAnalyser").mockReturnValue(new MockAnalyserNode(ctx));
   return ctx;
 };
 
@@ -392,11 +454,17 @@ export const mockAnalyserNode = () => {
   const ctx = new MockAudioContext();
   return new MockAnalyserNode(ctx);
 };
-export const mockAudioBuffer = (options?: Partial<{ numberOfChannels: number; length: number; sampleRate: number }>) => 
+export const mockAudioBuffer = (
+  options?: Partial<{
+    numberOfChannels: number;
+    length: number;
+    sampleRate: number;
+  }>,
+) =>
   new MockAudioBuffer({
     numberOfChannels: options?.numberOfChannels ?? 2,
     length: options?.length ?? 44100,
-    sampleRate: options?.sampleRate ?? 44100
+    sampleRate: options?.sampleRate ?? 44100,
   });
 
 export default {
@@ -416,5 +484,5 @@ export default {
   mockBiquadFilterNode,
   mockAudioBufferSourceNode,
   mockAnalyserNode,
-  mockAudioBuffer
+  mockAudioBuffer,
 };

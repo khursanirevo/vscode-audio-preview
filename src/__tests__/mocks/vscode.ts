@@ -6,7 +6,9 @@
 class MockEventEmitter<T> {
   private listeners: ((data: T) => void)[] = [];
 
-  constructor(public event?: (listener: (data: T) => void) => { dispose(): void }) {
+  constructor(
+    public event?: (listener: (data: T) => void) => { dispose(): void },
+  ) {
     if (!this.event) {
       this.event = (listener: (data: T) => void) => {
         this.listeners.push(listener);
@@ -16,7 +18,7 @@ class MockEventEmitter<T> {
   }
 
   fire(data: T): void {
-    this.listeners.forEach(listener => listener(data));
+    this.listeners.forEach((listener) => listener(data));
   }
 
   private removeListener(listener: (data: T) => void): void {
@@ -33,49 +35,49 @@ class MockEventEmitter<T> {
 
 // Mock URI
 const mockUri = {
-  file: (path: string) => ({ 
-    scheme: 'file', 
-    path, 
+  file: (path: string) => ({
+    scheme: "file",
+    path,
     fsPath: path,
-    authority: '',
-    query: '',
-    fragment: '',
+    authority: "",
+    query: "",
+    fragment: "",
     toString: () => `file://${path}`,
-    toJSON: () => ({ scheme: 'file', path }),
-    with: (change: any) => mockUri.file(change.path || path)
+    toJSON: () => ({ scheme: "file", path }),
+    with: (change: any) => mockUri.file(change.path || path),
   }),
   parse: (value: string) => ({
-    scheme: value.startsWith('file://') ? 'file' : 'untitled',
-    path: value.replace('file://', ''),
-    fsPath: value.replace('file://', ''),
-    authority: '',
-    query: '',
-    fragment: '',
+    scheme: value.startsWith("file://") ? "file" : "untitled",
+    path: value.replace("file://", ""),
+    fsPath: value.replace("file://", ""),
+    authority: "",
+    query: "",
+    fragment: "",
     toString: () => value,
-    toJSON: () => ({ scheme: 'file', path: value }),
-    with: (change: any) => mockUri.parse(change.path || value)
-  })
+    toJSON: () => ({ scheme: "file", path: value }),
+    with: (change: any) => mockUri.parse(change.path || value),
+  }),
 };
 
 // Mock Disposable
 const mockDisposable = {
   from: (...disposables: any[]) => ({
-    dispose: () => disposables.forEach(d => d?.dispose?.())
-  })
+    dispose: () => disposables.forEach((d) => d?.dispose?.()),
+  }),
 };
 
 // Mock WebviewPanel
 const createMockWebviewPanel = () => ({
   webview: {
-    html: '',
+    html: "",
     options: {},
-    cspSource: 'vscode-webview:',
+    cspSource: "vscode-webview:",
     asWebviewUri: (uri: any) => uri,
     postMessage: jest.fn(),
-    onDidReceiveMessage: jest.fn(() => ({ dispose: jest.fn() }))
+    onDidReceiveMessage: jest.fn(() => ({ dispose: jest.fn() })),
   },
-  viewType: 'audioPreview',
-  title: 'Audio Preview',
+  viewType: "audioPreview",
+  title: "Audio Preview",
   iconPath: undefined as any,
   options: {},
   viewColumn: 1,
@@ -84,15 +86,15 @@ const createMockWebviewPanel = () => ({
   onDidDispose: jest.fn(() => ({ dispose: jest.fn() })),
   onDidChangeViewState: jest.fn(() => ({ dispose: jest.fn() })),
   reveal: jest.fn(),
-  dispose: jest.fn()
+  dispose: jest.fn(),
 });
 
 // Mock TextDocument
-const createMockTextDocument = (uri: any, content = '') => ({
+const createMockTextDocument = (uri: any, content = "") => ({
   uri,
   fileName: uri.fsPath,
-  isUntitled: uri.scheme === 'untitled',
-  languageId: 'audio',
+  isUntitled: uri.scheme === "untitled",
+  languageId: "audio",
   version: 1,
   isDirty: false,
   isClosed: false,
@@ -105,7 +107,7 @@ const createMockTextDocument = (uri: any, content = '') => ({
   getText: jest.fn(() => content),
   getWordRangeAtPosition: jest.fn(),
   validateRange: jest.fn(),
-  validatePosition: jest.fn()
+  validatePosition: jest.fn(),
 });
 
 // Mock workspace
@@ -115,20 +117,20 @@ const mockWorkspace = {
     writeFile: jest.fn(),
     stat: jest.fn(),
     createDirectory: jest.fn(),
-    delete: jest.fn()
+    delete: jest.fn(),
   },
   openTextDocument: jest.fn(),
   createFileSystemWatcher: jest.fn(() => ({
     onDidChange: jest.fn(() => ({ dispose: jest.fn() })),
     onDidCreate: jest.fn(() => ({ dispose: jest.fn() })),
     onDidDelete: jest.fn(() => ({ dispose: jest.fn() })),
-    dispose: jest.fn()
+    dispose: jest.fn(),
   })),
   getConfiguration: jest.fn(() => ({
     get: jest.fn(),
     update: jest.fn(),
     has: jest.fn(),
-    inspect: jest.fn()
+    inspect: jest.fn(),
   })),
   workspaceFolders: [] as any[],
   onDidChangeConfiguration: jest.fn(() => ({ dispose: jest.fn() })),
@@ -138,7 +140,7 @@ const mockWorkspace = {
   textDocuments: [] as any[],
   workspaceFile: undefined as any,
   name: undefined as any,
-  isTrusted: true
+  isTrusted: true,
 };
 
 // Mock window
@@ -158,13 +160,13 @@ const mockWindow = {
   onDidChangeTextEditorVisibleRanges: jest.fn(() => ({ dispose: jest.fn() })),
   onDidChangeTextEditorOptions: jest.fn(() => ({ dispose: jest.fn() })),
   createStatusBarItem: jest.fn(() => ({
-    text: '',
-    tooltip: '',
+    text: "",
+    tooltip: "",
     color: undefined,
     show: jest.fn(),
     hide: jest.fn(),
-    dispose: jest.fn()
-  }))
+    dispose: jest.fn(),
+  })),
 };
 
 // Mock commands
@@ -172,7 +174,7 @@ const mockCommands = {
   registerCommand: jest.fn(() => ({ dispose: jest.fn() })),
   executeCommand: jest.fn(),
   getCommands: jest.fn(() => Promise.resolve([])),
-  registerTextEditorCommand: jest.fn(() => ({ dispose: jest.fn() }))
+  registerTextEditorCommand: jest.fn(() => ({ dispose: jest.fn() })),
 };
 
 // Mock ExtensionContext
@@ -181,16 +183,16 @@ const createMockExtensionContext = () => ({
   workspaceState: {
     get: jest.fn(),
     update: jest.fn(),
-    keys: jest.fn(() => [])
+    keys: jest.fn(() => []),
   },
   globalState: {
     get: jest.fn(),
     update: jest.fn(),
     keys: jest.fn(() => []),
-    setKeysForSync: jest.fn()
+    setKeysForSync: jest.fn(),
   },
-  extensionPath: '/mock/extension/path',
-  extensionUri: mockUri.file('/mock/extension/path'),
+  extensionPath: "/mock/extension/path",
+  extensionUri: mockUri.file("/mock/extension/path"),
   environmentVariableCollection: {
     persistent: true,
     replace: jest.fn(),
@@ -199,21 +201,29 @@ const createMockExtensionContext = () => ({
     get: jest.fn(),
     forEach: jest.fn(),
     delete: jest.fn(),
-    clear: jest.fn()
+    clear: jest.fn(),
   },
-  asAbsolutePath: jest.fn((relativePath: string) => `/mock/extension/path/${relativePath}`),
-  storagePath: '/mock/storage/path',
-  globalStoragePath: '/mock/global/storage/path',
-  logPath: '/mock/log/path',
-  extensionMode: 3 // Development
+  asAbsolutePath: jest.fn(
+    (relativePath: string) => `/mock/extension/path/${relativePath}`,
+  ),
+  storagePath: "/mock/storage/path",
+  globalStoragePath: "/mock/global/storage/path",
+  logPath: "/mock/log/path",
+  extensionMode: 3, // Development
 });
 
 // Mock FileSystemProvider methods for CustomDocument
 const createMockCustomDocument = (uri: any, mockData?: Uint8Array) => ({
   uri,
   dispose: jest.fn(),
-  _mockData: mockData || new Uint8Array([1, 2, 3, 4])
+  _mockData: mockData || new Uint8Array([1, 2, 3, 4]),
 });
+
+// Reset all mocks helper
+const resetAllMocks = () => {
+  jest.clearAllMocks();
+  // Reset any additional state if needed
+};
 
 // Create the main vscode mock object
 const vscode = {
@@ -223,53 +233,50 @@ const vscode = {
   window: mockWindow,
   commands: mockCommands,
   EventEmitter: MockEventEmitter,
-  
+
   // Enums and constants
   ViewColumn: {
     One: 1,
     Two: 2,
     Three: 3,
     Active: -1,
-    Beside: -2
+    Beside: -2,
   },
-  
+
   WebviewPanelTargetArea: {
     Main: 1,
-    AuxiliaryBar: 2
+    AuxiliaryBar: 2,
   },
 
   ConfigurationTarget: {
     Global: 1,
     Workspace: 2,
-    WorkspaceFolder: 3
+    WorkspaceFolder: 3,
   },
 
   ExtensionMode: {
     Production: 1,
     Development: 2,
-    Test: 3
+    Test: 3,
   },
 
   ExtensionKind: {
     UI: 1,
     Workspace: 2,
-    UIAndWorkspace: 3
+    UIAndWorkspace: 3,
   },
 
   UIKind: {
     Desktop: 1,
-    Web: 2
+    Web: 2,
   },
 
   // Test helpers
-  __createMockExtensionContext: createMockExtensionContext,
-  __createMockWebviewPanel: createMockWebviewPanel,
-  __createMockTextDocument: createMockTextDocument,
-  __createMockCustomDocument: createMockCustomDocument,
-  __resetAllMocks: () => {
-    jest.clearAllMocks();
-    // Reset any additional state if needed
-  }
+  createMockExtensionContext: createMockExtensionContext,
+  createMockWebviewPanel: createMockWebviewPanel,
+  createMockTextDocument: createMockTextDocument,
+  createMockCustomDocument: createMockCustomDocument,
+  resetAllMocks: resetAllMocks,
 };
 
 // Individual exports for named imports
@@ -288,17 +295,19 @@ export const UIKind = vscode.UIKind;
 export const env = { uiKind: 1, remoteName: undefined as any }; // Mock env
 export const extensions = { getExtension: jest.fn() }; // Mock extensions
 
-// Export test helpers
-export const __createMockExtensionContext = vscode.__createMockExtensionContext;
-export const __createMockWebviewPanel = vscode.__createMockWebviewPanel;
-export const __createMockTextDocument = vscode.__createMockTextDocument;
-export const __createMockCustomDocument = vscode.__createMockCustomDocument;
-export const __resetAllMocks = vscode.__resetAllMocks;
+// Export test helpers that are already declared above
+export {
+  createMockExtensionContext,
+  createMockWebviewPanel,
+  createMockTextDocument,
+  createMockCustomDocument,
+  resetAllMocks,
+};
 
 // Add environment mock
 Object.assign(vscode, {
   env: { uiKind: 1, remoteName: undefined as any },
-  extensions: { getExtension: jest.fn() }
+  extensions: { getExtension: jest.fn() },
 });
 
 // Set up global mock

@@ -1,9 +1,9 @@
-import { renderHook } from '@testing-library/react';
-import { usePlayerSettings } from './usePlayerSettings';
-import { PlayerSettingsContext } from '../contexts/PlayerSettingsContext';
-import React from 'react';
+import { renderHook } from "@testing-library/react";
+import { usePlayerSettings } from "./usePlayerSettings";
+import { PlayerSettingsContext } from "../contexts/PlayerSettingsContext";
+import React from "react";
 
-describe('usePlayerSettings Hook', () => {
+describe("usePlayerSettings Hook", () => {
   const mockPlayerSettingsValue = {
     sampleRate: 44100,
     volumeUnitDb: false,
@@ -29,9 +29,13 @@ describe('usePlayerSettings Hook', () => {
     initializeFromDefault: jest.fn(),
   };
 
-  it('should return PlayerSettings context value when within provider', () => {
+  it("should return PlayerSettings context value when within provider", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: mockPlayerSettingsValue }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: mockPlayerSettingsValue },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayerSettings(), { wrapper });
 
@@ -39,33 +43,43 @@ describe('usePlayerSettings Hook', () => {
     expect(result.current.sampleRate).toBe(44100);
     expect(result.current.enableHpf).toBe(false);
     expect(result.current.enableLpf).toBe(false);
-    expect(result.current.setEnableHpf).toBe(mockPlayerSettingsValue.setEnableHpf);
+    expect(result.current.setEnableHpf).toBe(
+      mockPlayerSettingsValue.setEnableHpf,
+    );
   });
 
-  it('should throw error when used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+  it("should throw error when used outside provider", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => usePlayerSettings());
-    }).toThrow('usePlayerSettings must be used within a PlayerSettingsProvider');
+    }).toThrow(
+      "usePlayerSettings must be used within a PlayerSettingsProvider",
+    );
 
     consoleError.mockRestore();
   });
 
-  it('should throw error with undefined context', () => {
+  it("should throw error with undefined context", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: undefined }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: undefined },
+        children,
+      );
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => usePlayerSettings(), { wrapper });
-    }).toThrow('usePlayerSettings must be used within a PlayerSettingsProvider');
+    }).toThrow(
+      "usePlayerSettings must be used within a PlayerSettingsProvider",
+    );
 
     consoleError.mockRestore();
   });
 
-  it('should provide access to all player settings', () => {
+  it("should provide access to all player settings", () => {
     const fullContext = {
       sampleRate: 48000,
       volumeUnitDb: true,
@@ -92,7 +106,11 @@ describe('usePlayerSettings Hook', () => {
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: fullContext }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: fullContext },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayerSettings(), { wrapper });
 
@@ -109,26 +127,32 @@ describe('usePlayerSettings Hook', () => {
     expect(result.current.matchFilterFrequencyToSpectrogram).toBe(false);
   });
 
-  it('should provide access to all setter functions', () => {
+  it("should provide access to all setter functions", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: mockPlayerSettingsValue }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: mockPlayerSettingsValue },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayerSettings(), { wrapper });
 
-    expect(typeof result.current.setVolumeUnitDb).toBe('function');
-    expect(typeof result.current.setInitialVolumeDb).toBe('function');
-    expect(typeof result.current.setInitialVolume).toBe('function');
-    expect(typeof result.current.setEnableSpacekeyPlay).toBe('function');
-    expect(typeof result.current.setEnableSeekToPlay).toBe('function');
-    expect(typeof result.current.setEnableHpf).toBe('function');
-    expect(typeof result.current.setHpfFrequency).toBe('function');
-    expect(typeof result.current.setEnableLpf).toBe('function');
-    expect(typeof result.current.setLpfFrequency).toBe('function');
-    expect(typeof result.current.setMatchFilterFrequencyToSpectrogram).toBe('function');
-    expect(typeof result.current.initializeFromDefault).toBe('function');
+    expect(typeof result.current.setVolumeUnitDb).toBe("function");
+    expect(typeof result.current.setInitialVolumeDb).toBe("function");
+    expect(typeof result.current.setInitialVolume).toBe("function");
+    expect(typeof result.current.setEnableSpacekeyPlay).toBe("function");
+    expect(typeof result.current.setEnableSeekToPlay).toBe("function");
+    expect(typeof result.current.setEnableHpf).toBe("function");
+    expect(typeof result.current.setHpfFrequency).toBe("function");
+    expect(typeof result.current.setEnableLpf).toBe("function");
+    expect(typeof result.current.setLpfFrequency).toBe("function");
+    expect(typeof result.current.setMatchFilterFrequencyToSpectrogram).toBe(
+      "function",
+    );
+    expect(typeof result.current.initializeFromDefault).toBe("function");
   });
 
-  it('should maintain function references', () => {
+  it("should maintain function references", () => {
     const setEnableHpf = jest.fn();
     const setHpfFrequency = jest.fn();
     const setEnableLpf = jest.fn();
@@ -143,7 +167,11 @@ describe('usePlayerSettings Hook', () => {
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: context }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: context },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayerSettings(), { wrapper });
 
@@ -153,26 +181,32 @@ describe('usePlayerSettings Hook', () => {
     expect(result.current.initializeFromDefault).toBe(initializeFromDefault);
   });
 
-  it('should expose volume and filter settings', () => {
+  it("should expose volume and filter settings", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(PlayerSettingsContext.Provider, { value: mockPlayerSettingsValue }, children);
+      React.createElement(
+        PlayerSettingsContext.Provider,
+        { value: mockPlayerSettingsValue },
+        children,
+      );
 
     const { result } = renderHook(() => usePlayerSettings(), { wrapper });
 
     // Volume settings
-    expect(typeof result.current.volumeUnitDb).toBe('boolean');
-    expect(typeof result.current.initialVolumeDb).toBe('number');
-    expect(typeof result.current.initialVolume).toBe('number');
+    expect(typeof result.current.volumeUnitDb).toBe("boolean");
+    expect(typeof result.current.initialVolumeDb).toBe("number");
+    expect(typeof result.current.initialVolume).toBe("number");
 
     // Filter settings
-    expect(typeof result.current.enableHpf).toBe('boolean');
-    expect(typeof result.current.hpfFrequency).toBe('number');
-    expect(typeof result.current.enableLpf).toBe('boolean');
-    expect(typeof result.current.lpfFrequency).toBe('number');
+    expect(typeof result.current.enableHpf).toBe("boolean");
+    expect(typeof result.current.hpfFrequency).toBe("number");
+    expect(typeof result.current.enableLpf).toBe("boolean");
+    expect(typeof result.current.lpfFrequency).toBe("number");
 
     // Playback settings
-    expect(typeof result.current.enableSpacekeyPlay).toBe('boolean');
-    expect(typeof result.current.enableSeekToPlay).toBe('boolean');
-    expect(typeof result.current.matchFilterFrequencyToSpectrogram).toBe('boolean');
+    expect(typeof result.current.enableSpacekeyPlay).toBe("boolean");
+    expect(typeof result.current.enableSeekToPlay).toBe("boolean");
+    expect(typeof result.current.matchFilterFrequencyToSpectrogram).toBe(
+      "boolean",
+    );
   });
 });

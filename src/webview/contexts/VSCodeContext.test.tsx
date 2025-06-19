@@ -44,7 +44,7 @@ describe('VSCodeContext', () => {
   beforeEach(() => {
     setupAudioContextMocks();
     jest.clearAllMocks();
-    mockVSCodeAPI.__reset();
+    mockVSCodeAPI.reset();
   });
 
   describe('Provider Initialization', () => {
@@ -69,7 +69,7 @@ describe('VSCodeContext', () => {
         </VSCodeProvider>
       );
 
-      const sentMessages = mockVSCodeAPI.__getSentMessages();
+      const sentMessages = mockVSCodeAPI.getSentMessages();
       expect(sentMessages).toHaveLength(1);
       expect(sentMessages[0]).toEqual({
         type: 'WV_CONFIG'
@@ -155,7 +155,7 @@ describe('VSCodeContext', () => {
       });
 
       // Should request initial data after receiving config
-      const sentMessages = mockVSCodeAPI.__getSentMessages();
+      const sentMessages = mockVSCodeAPI.getSentMessages();
       expect(sentMessages).toHaveLength(2); // Initial config request + data request
       expect(sentMessages[1]).toEqual({
         type: 'WV_DATA',
@@ -224,7 +224,7 @@ describe('VSCodeContext', () => {
 
       // Should request next chunk
       await waitFor(() => {
-        const sentMessages = mockVSCodeAPI.__getSentMessages();
+        const sentMessages = mockVSCodeAPI.getSentMessages();
         const dataMessages = sentMessages.filter(msg => msg.type === 'WV_DATA');
         expect(dataMessages.length).toBeGreaterThan(0);
         expect(dataMessages[dataMessages.length - 1]).toEqual({
@@ -289,7 +289,7 @@ describe('VSCodeContext', () => {
       });
 
       // Should request config again
-      const sentMessages = mockVSCodeAPI.__getSentMessages();
+      const sentMessages = mockVSCodeAPI.getSentMessages();
       const configRequests = sentMessages.filter((msg: any) => msg.type === 'WV_CONFIG');
       expect(configRequests.length).toBeGreaterThan(1);
     });

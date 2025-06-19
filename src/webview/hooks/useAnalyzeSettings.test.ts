@@ -1,9 +1,12 @@
-import { renderHook } from '@testing-library/react';
-import { useAnalyzeSettings } from './useAnalyzeSettings';
-import { AnalyzeSettingsContext, AnalyzeSettingsContextType } from '../contexts/AnalyzeSettingsContext';
-import React from 'react';
+import { renderHook } from "@testing-library/react";
+import { useAnalyzeSettings } from "./useAnalyzeSettings";
+import {
+  AnalyzeSettingsContext,
+  AnalyzeSettingsContextType,
+} from "../contexts/AnalyzeSettingsContext";
+import React from "react";
 
-describe('useAnalyzeSettings Hook', () => {
+describe("useAnalyzeSettings Hook", () => {
   // Create a minimal mock that satisfies the interface
   const createMockAnalyzeSettings = (): AnalyzeSettingsContextType => ({
     // State properties
@@ -28,7 +31,7 @@ describe('useAnalyzeSettings Hook', () => {
     spectrogramAmplitudeRange: 2,
     frequencyScale: 0, // Linear
     melFilterNum: 40,
-    
+
     // Setter functions
     setAutoCalcHopSize: jest.fn(),
     setWaveformVisible: jest.fn(),
@@ -66,10 +69,14 @@ describe('useAnalyzeSettings Hook', () => {
     }),
   });
 
-  it('should return AnalyzeSettings context value when within provider', () => {
+  it("should return AnalyzeSettings context value when within provider", () => {
     const mockValue = createMockAnalyzeSettings();
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: mockValue }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: mockValue },
+        children,
+      );
 
     const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
 
@@ -80,30 +87,38 @@ describe('useAnalyzeSettings Hook', () => {
     expect(result.current.windowSize).toBe(1024);
   });
 
-  it('should throw error when used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+  it("should throw error when used outside provider", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => useAnalyzeSettings());
-    }).toThrow('useAnalyzeSettings must be used within a AnalyzeSettingsProvider');
+    }).toThrow(
+      "useAnalyzeSettings must be used within a AnalyzeSettingsProvider",
+    );
 
     consoleError.mockRestore();
   });
 
-  it('should throw error with undefined context', () => {
+  it("should throw error with undefined context", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: undefined }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: undefined },
+        children,
+      );
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       renderHook(() => useAnalyzeSettings(), { wrapper });
-    }).toThrow('useAnalyzeSettings must be used within a AnalyzeSettingsProvider');
+    }).toThrow(
+      "useAnalyzeSettings must be used within a AnalyzeSettingsProvider",
+    );
 
     consoleError.mockRestore();
   });
 
-  it('should provide access to all analyze settings state', () => {
+  it("should provide access to all analyze settings state", () => {
     const mockValue = createMockAnalyzeSettings();
     mockValue.waveformVisible = false;
     mockValue.spectrogramVisible = true;
@@ -111,7 +126,11 @@ describe('useAnalyzeSettings Hook', () => {
     mockValue.frequencyScale = 1; // Log scale
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: mockValue }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: mockValue },
+        children,
+      );
 
     const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
 
@@ -121,34 +140,42 @@ describe('useAnalyzeSettings Hook', () => {
     expect(result.current.frequencyScale).toBe(1);
   });
 
-  it('should provide access to setter functions', () => {
+  it("should provide access to setter functions", () => {
     const mockValue = createMockAnalyzeSettings();
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: mockValue }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: mockValue },
+        children,
+      );
 
     const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
 
-    expect(typeof result.current.setWaveformVisible).toBe('function');
-    expect(typeof result.current.setSpectrogramVisible).toBe('function');
-    expect(typeof result.current.setWindowSizeIndex).toBe('function');
-    expect(typeof result.current.setFrequencyScale).toBe('function');
-    expect(typeof result.current.initializeFromDefault).toBe('function');
+    expect(typeof result.current.setWaveformVisible).toBe("function");
+    expect(typeof result.current.setSpectrogramVisible).toBe("function");
+    expect(typeof result.current.setWindowSizeIndex).toBe("function");
+    expect(typeof result.current.setFrequencyScale).toBe("function");
+    expect(typeof result.current.initializeFromDefault).toBe("function");
   });
 
-  it('should provide utility functions', () => {
+  it("should provide utility functions", () => {
     const mockValue = createMockAnalyzeSettings();
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: mockValue }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: mockValue },
+        children,
+      );
 
     const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
 
-    expect(typeof result.current.toProps).toBe('function');
-    expect(typeof result.current.resetToDefaultTimeRange).toBe('function');
-    expect(typeof result.current.resetToDefaultAmplitudeRange).toBe('function');
-    expect(typeof result.current.resetToDefaultFrequencyRange).toBe('function');
+    expect(typeof result.current.toProps).toBe("function");
+    expect(typeof result.current.resetToDefaultTimeRange).toBe("function");
+    expect(typeof result.current.resetToDefaultAmplitudeRange).toBe("function");
+    expect(typeof result.current.resetToDefaultFrequencyRange).toBe("function");
   });
 
-  it('should maintain function references', () => {
+  it("should maintain function references", () => {
     const setWaveformVisible = jest.fn();
     const setWindowSizeIndex = jest.fn();
     const toProps = jest.fn();
@@ -159,7 +186,11 @@ describe('useAnalyzeSettings Hook', () => {
     mockValue.toProps = toProps;
 
     const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(AnalyzeSettingsContext.Provider, { value: mockValue }, children);
+      React.createElement(
+        AnalyzeSettingsContext.Provider,
+        { value: mockValue },
+        children,
+      );
 
     const { result } = renderHook(() => useAnalyzeSettings(), { wrapper });
 

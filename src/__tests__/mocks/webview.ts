@@ -2,7 +2,7 @@
  * Webview communication mocks for testing
  */
 
-import type { ExtMessage, WebviewMessage } from '../../messageTypes';
+import type { ExtMessage, WebviewMessage } from "../../messageTypes";
 
 // Mock message posting functionality
 export class MockWebviewMessageHandler {
@@ -14,7 +14,7 @@ export class MockWebviewMessageHandler {
     this.sentMessages.push(message);
     // Simulate async message delivery
     setTimeout(() => {
-      this.messageListeners.forEach(listener => listener(message));
+      this.messageListeners.forEach((listener) => listener(message));
     }, 0);
   });
 
@@ -27,14 +27,14 @@ export class MockWebviewMessageHandler {
         if (index > -1) {
           this.messageListeners.splice(index, 1);
         }
-      }
+      },
     };
   });
 
   // Helper to simulate receiving messages from webview
   simulateWebviewMessage(message: WebviewMessage) {
     // Simulate the VS Code API receiving a message
-    this.messageListeners.forEach(listener => listener({ data: message }));
+    this.messageListeners.forEach((listener) => listener({ data: message }));
   }
 
   // Test helpers
@@ -46,8 +46,13 @@ export class MockWebviewMessageHandler {
     return this.sentMessages[this.sentMessages.length - 1];
   }
 
-  getSentMessagesByType<T extends WebviewMessage['type']>(type: T): Extract<WebviewMessage, { type: T }>[] {
-    return this.sentMessages.filter(msg => msg.type === type) as Extract<WebviewMessage, { type: T }>[];
+  getSentMessagesByType<T extends WebviewMessage["type"]>(
+    type: T,
+  ): Extract<WebviewMessage, { type: T }>[] {
+    return this.sentMessages.filter((msg) => msg.type === type) as Extract<
+      WebviewMessage,
+      { type: T }
+    >[];
   }
 
   clearSentMessages() {
@@ -65,20 +70,21 @@ export class MockWebviewMessageHandler {
 // Mock VS Code API object that webview receives
 export const createMockVSCodeAPI = () => {
   const messageHandler = new MockWebviewMessageHandler();
-  
+
   return {
     postMessage: messageHandler.postMessage,
     getState: jest.fn(() => null),
     setState: jest.fn(),
-    
+
     // Test helpers - not part of real VS Code API
-    __messageHandler: messageHandler,
-    __simulateMessage: messageHandler.simulateWebviewMessage.bind(messageHandler),
-    __getSentMessages: messageHandler.getSentMessages.bind(messageHandler),
-    __getLastSentMessage: messageHandler.getLastSentMessage.bind(messageHandler),
-    __getSentMessagesByType: messageHandler.getSentMessagesByType.bind(messageHandler),
-    __clearSentMessages: messageHandler.clearSentMessages.bind(messageHandler),
-    __reset: messageHandler.reset.bind(messageHandler)
+    messageHandler: messageHandler,
+    simulateMessage: messageHandler.simulateWebviewMessage.bind(messageHandler),
+    getSentMessages: messageHandler.getSentMessages.bind(messageHandler),
+    getLastSentMessage: messageHandler.getLastSentMessage.bind(messageHandler),
+    getSentMessagesByType:
+      messageHandler.getSentMessagesByType.bind(messageHandler),
+    clearSentMessages: messageHandler.clearSentMessages.bind(messageHandler),
+    reset: messageHandler.reset.bind(messageHandler),
   };
 };
 
@@ -88,7 +94,7 @@ export const createMockWebviewHTML = (
   stylesUri: any,
   scriptUri: any,
   nonce: string,
-  cspSource: string
+  cspSource: string,
 ) => `
 <!DOCTYPE html>
 <html lang="en">
@@ -109,26 +115,26 @@ export const createMockWebviewHTML = (
 // Mock webview panel for testing
 export const createMockWebviewPanel = () => {
   const messageHandler = new MockWebviewMessageHandler();
-  
+
   return {
     webview: {
-      html: '',
+      html: "",
       options: {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [] as any[]
+        localResourceRoots: [] as any[],
       },
-      cspSource: 'vscode-webview:',
+      cspSource: "vscode-webview:",
       asWebviewUri: jest.fn((uri: any) => ({
         ...uri,
-        scheme: 'vscode-webview',
-        toString: () => `vscode-webview://${uri.path}`
+        scheme: "vscode-webview",
+        toString: () => `vscode-webview://${uri.path}`,
       })),
       postMessage: messageHandler.postMessage,
-      onDidReceiveMessage: messageHandler.onMessage
+      onDidReceiveMessage: messageHandler.onMessage,
     },
-    viewType: 'audioPreview',
-    title: 'Audio Preview',
+    viewType: "audioPreview",
+    title: "Audio Preview",
     iconPath: undefined as any,
     options: {},
     viewColumn: 1,
@@ -138,12 +144,13 @@ export const createMockWebviewPanel = () => {
     onDidChangeViewState: jest.fn(() => ({ dispose: jest.fn() })),
     reveal: jest.fn(),
     dispose: jest.fn(),
-    
+
     // Test helpers
-    __messageHandler: messageHandler,
-    __simulateWebviewMessage: messageHandler.simulateWebviewMessage.bind(messageHandler),
-    __getSentMessages: messageHandler.getSentMessages.bind(messageHandler),
-    __reset: messageHandler.reset.bind(messageHandler)
+    messageHandler: messageHandler,
+    simulateWebviewMessage:
+      messageHandler.simulateWebviewMessage.bind(messageHandler),
+    getSentMessages: messageHandler.getSentMessages.bind(messageHandler),
+    reset: messageHandler.reset.bind(messageHandler),
   };
 };
 
@@ -176,7 +183,7 @@ export class MockWebviewCollection {
   }
 
   dispose() {
-    this.webviews.forEach(webview => {
+    this.webviews.forEach((webview) => {
       if (webview.dispose) {
         webview.dispose();
       }
@@ -187,36 +194,47 @@ export class MockWebviewCollection {
 
 // Message simulation helpers
 export const simulateConfigMessage = (config: any): ExtMessage => ({
-  type: 'EXT_CONFIG',
-  payload: config
+  type: "EXT_CONFIG",
+  payload: config,
 });
 
-export const simulateDataMessage = (samples: ArrayBufferLike, start: number, end: number, wholeLength: number): ExtMessage => ({
-  type: 'EXT_DATA',
-  payload: { samples, start, end, wholeLength }
+export const simulateDataMessage = (
+  samples: ArrayBufferLike,
+  start: number,
+  end: number,
+  wholeLength: number,
+): ExtMessage => ({
+  type: "EXT_DATA",
+  payload: { samples, start, end, wholeLength },
 });
 
 export const simulateReloadMessage = (): ExtMessage => ({
-  type: 'EXT_RELOAD'
+  type: "EXT_RELOAD",
 });
 
 export const simulateWebviewConfigRequest = (): WebviewMessage => ({
-  type: 'WV_CONFIG'
+  type: "WV_CONFIG",
 });
 
-export const simulateWebviewDataRequest = (start: number, end: number): WebviewMessage => ({
-  type: 'WV_DATA',
-  payload: { start, end }
+export const simulateWebviewDataRequest = (
+  start: number,
+  end: number,
+): WebviewMessage => ({
+  type: "WV_DATA",
+  payload: { start, end },
 });
 
-export const simulateWebviewWriteWav = (samples: ArrayBufferLike, filename: string): WebviewMessage => ({
-  type: 'WV_WRITE_WAV',
-  payload: { samples, filename }
+export const simulateWebviewWriteWav = (
+  samples: ArrayBufferLike,
+  filename: string,
+): WebviewMessage => ({
+  type: "WV_WRITE_WAV",
+  payload: { samples, filename },
 });
 
 export const simulateWebviewError = (message: string): WebviewMessage => ({
-  type: 'WV_ERROR',
-  payload: { message }
+  type: "WV_ERROR",
+  payload: { message },
 });
 
 export default {
@@ -231,5 +249,5 @@ export default {
   simulateWebviewConfigRequest,
   simulateWebviewDataRequest,
   simulateWebviewWriteWav,
-  simulateWebviewError
+  simulateWebviewError,
 };

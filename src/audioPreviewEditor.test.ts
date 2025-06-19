@@ -2,58 +2,62 @@
  * AudioPreviewEditor tests
  */
 
-import * as vscode from 'vscode';
-import { AudioPreviewEditorProvider } from './audioPreviewEditor';
+import * as vscode from "vscode";
+import { AudioPreviewEditorProvider } from "./audioPreviewEditor";
 
 // Mock the util module
-jest.mock('./util', () => ({
-  getNonce: jest.fn(() => 'mock-nonce-123')
+jest.mock("./util", () => ({
+  getNonce: jest.fn(() => "mock-nonce-123"),
 }));
 
-describe('AudioPreviewEditor', () => {
+describe("AudioPreviewEditor", () => {
   let mockContext: vscode.ExtensionContext;
 
   beforeEach(() => {
-    mockContext = (vscode as any).__createMockExtensionContext();
+    mockContext = (vscode as any).createMockExtensionContext();
     jest.clearAllMocks();
   });
 
-  describe('AudioPreviewEditorProvider', () => {
-    describe('register', () => {
-      it('should register custom editor provider', () => {
+  describe("AudioPreviewEditorProvider", () => {
+    describe("register", () => {
+      it("should register custom editor provider", () => {
         const mockDisposable = { dispose: jest.fn() };
-        (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(mockDisposable);
+        (
+          vscode.window.registerCustomEditorProvider as jest.Mock
+        ).mockReturnValue(mockDisposable);
 
         const result = AudioPreviewEditorProvider.register(mockContext);
 
         expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalledWith(
-          'wavPreview.audioPreview',
+          "wavPreview.audioPreview",
           expect.any(AudioPreviewEditorProvider),
           {
             supportsMultipleEditorsPerDocument: false,
             webviewOptions: {
               retainContextWhenHidden: true,
             },
-          }
+          },
         );
         expect(result).toBe(mockDisposable);
       });
 
-      it('should create AudioPreviewEditorProvider with context', () => {
+      it("should create AudioPreviewEditorProvider with context", () => {
         AudioPreviewEditorProvider.register(mockContext);
 
         expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalledWith(
           expect.any(String),
           expect.objectContaining({
-            _context: mockContext
+            _context: mockContext,
           }),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 
-      it('should return disposable that can be used for cleanup', () => {
+      it("should return disposable that can be used for cleanup", () => {
         const mockDisposable = { dispose: jest.fn() };
-        (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(mockDisposable);
+        (
+          vscode.window.registerCustomEditorProvider as jest.Mock
+        ).mockReturnValue(mockDisposable);
 
         const result = AudioPreviewEditorProvider.register(mockContext);
         result.dispose();
@@ -62,21 +66,23 @@ describe('AudioPreviewEditor', () => {
       });
     });
 
-    describe('provider configuration', () => {
-      it('should use correct viewType', () => {
+    describe("provider configuration", () => {
+      it("should use correct viewType", () => {
         AudioPreviewEditorProvider.register(mockContext);
 
         expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalledWith(
-          'wavPreview.audioPreview',
+          "wavPreview.audioPreview",
           expect.anything(),
-          expect.anything()
+          expect.anything(),
         );
       });
 
-      it('should configure webview options correctly', () => {
+      it("should configure webview options correctly", () => {
         AudioPreviewEditorProvider.register(mockContext);
 
-        const [, , options] = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0];
+        const [, , options] = (
+          vscode.window.registerCustomEditorProvider as jest.Mock
+        ).mock.calls[0];
         expect(options).toEqual({
           supportsMultipleEditorsPerDocument: false,
           webviewOptions: {
@@ -85,113 +91,134 @@ describe('AudioPreviewEditor', () => {
         });
       });
 
-      it('should not support multiple editors per document', () => {
+      it("should not support multiple editors per document", () => {
         AudioPreviewEditorProvider.register(mockContext);
 
-        const [, , options] = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0];
+        const [, , options] = (
+          vscode.window.registerCustomEditorProvider as jest.Mock
+        ).mock.calls[0];
         expect(options.supportsMultipleEditorsPerDocument).toBe(false);
       });
 
-      it('should retain webview context when hidden', () => {
+      it("should retain webview context when hidden", () => {
         AudioPreviewEditorProvider.register(mockContext);
 
-        const [, , options] = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0];
+        const [, , options] = (
+          vscode.window.registerCustomEditorProvider as jest.Mock
+        ).mock.calls[0];
         expect(options.webviewOptions.retainContextWhenHidden).toBe(true);
       });
     });
   });
 
-  describe('Provider Instance', () => {
+  describe("Provider Instance", () => {
     let provider: AudioPreviewEditorProvider;
 
     beforeEach(() => {
       provider = new (AudioPreviewEditorProvider as any)(mockContext);
     });
 
-    it('should create provider with context', () => {
-      expect(provider['_context']).toBe(mockContext);
+    it("should create provider with context", () => {
+      expect(provider["_context"]).toBe(mockContext);
     });
 
-    it('should initialize webviews collection', () => {
-      expect(provider['webviews']).toBeDefined();
+    it("should initialize webviews collection", () => {
+      expect(provider["webviews"]).toBeDefined();
     });
 
-    it('should implement CustomReadonlyEditorProvider interface', () => {
+    it("should implement CustomReadonlyEditorProvider interface", () => {
       // Check that provider has required methods
-      expect(typeof provider.openCustomDocument).toBe('function');
-      expect(typeof provider.resolveCustomEditor).toBe('function');
+      expect(typeof provider.openCustomDocument).toBe("function");
+      expect(typeof provider.resolveCustomEditor).toBe("function");
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle registration failure gracefully', () => {
-      const error = new Error('Registration failed');
-      (vscode.window.registerCustomEditorProvider as jest.Mock).mockImplementation(() => {
+  describe("Error Handling", () => {
+    it("should handle registration failure gracefully", () => {
+      const error = new Error("Registration failed");
+      (
+        vscode.window.registerCustomEditorProvider as jest.Mock
+      ).mockImplementation(() => {
         throw error;
       });
 
-      expect(() => AudioPreviewEditorProvider.register(mockContext)).toThrow('Registration failed');
+      expect(() => AudioPreviewEditorProvider.register(mockContext)).toThrow(
+        "Registration failed",
+      );
     });
 
-    it('should handle missing context gracefully', () => {
+    it("should handle missing context gracefully", () => {
       // Reset the mock to normal behavior
       const mockDisposable = { dispose: jest.fn() };
-      (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(mockDisposable);
-      
+      (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(
+        mockDisposable,
+      );
+
       const nullContext = null as any;
-      
-      expect(() => AudioPreviewEditorProvider.register(nullContext)).not.toThrow();
+
+      expect(() =>
+        AudioPreviewEditorProvider.register(nullContext),
+      ).not.toThrow();
       expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalled();
     });
   });
 
-  describe('Integration', () => {
-    it('should register with correct VS Code API calls', () => {
+  describe("Integration", () => {
+    it("should register with correct VS Code API calls", () => {
       const mockDisposable = { dispose: jest.fn() };
-      (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(mockDisposable);
+      (vscode.window.registerCustomEditorProvider as jest.Mock).mockReturnValue(
+        mockDisposable,
+      );
 
       const result = AudioPreviewEditorProvider.register(mockContext);
 
-      expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalledTimes(1);
+      expect(vscode.window.registerCustomEditorProvider).toHaveBeenCalledTimes(
+        1,
+      );
       expect(result).toBe(mockDisposable);
     });
 
-    it('should work with VS Code extension lifecycle', () => {
-      const disposables: vscode.Disposable[] = [];
-      
+    it("should work with VS Code extension lifecycle", () => {
+      const _disposables: vscode.Disposable[] = [];
+
       // Simulate extension activation
       const editorProvider = AudioPreviewEditorProvider.register(mockContext);
       mockContext.subscriptions.push(editorProvider);
-      
+
       // Simulate extension deactivation
-      mockContext.subscriptions.forEach(disposable => disposable.dispose());
-      
+      mockContext.subscriptions.forEach((disposable) => disposable.dispose());
+
       expect(editorProvider.dispose).toHaveBeenCalled();
     });
   });
 
-  describe('ViewType Consistency', () => {
-    it('should use consistent viewType across registrations', () => {
+  describe("ViewType Consistency", () => {
+    it("should use consistent viewType across registrations", () => {
       AudioPreviewEditorProvider.register(mockContext);
-      const firstCall = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0];
-      
+      const firstCall = (
+        vscode.window.registerCustomEditorProvider as jest.Mock
+      ).mock.calls[0];
+
       jest.clearAllMocks();
-      
+
       AudioPreviewEditorProvider.register(mockContext);
-      const secondCall = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0];
-      
+      const secondCall = (
+        vscode.window.registerCustomEditorProvider as jest.Mock
+      ).mock.calls[0];
+
       expect(firstCall[0]).toBe(secondCall[0]);
-      expect(firstCall[0]).toBe('wavPreview.audioPreview');
+      expect(firstCall[0]).toBe("wavPreview.audioPreview");
     });
 
-    it('should use viewType that matches package.json configuration', () => {
+    it("should use viewType that matches package.json configuration", () => {
       AudioPreviewEditorProvider.register(mockContext);
-      
-      const viewType = (vscode.window.registerCustomEditorProvider as jest.Mock).mock.calls[0][0];
-      
+
+      const viewType = (vscode.window.registerCustomEditorProvider as jest.Mock)
+        .mock.calls[0][0];
+
       // This viewType should match what's configured in package.json
       expect(viewType).toMatch(/^wavPreview\./);
-      expect(viewType).toContain('audioPreview');
+      expect(viewType).toContain("audioPreview");
     });
   });
 });
