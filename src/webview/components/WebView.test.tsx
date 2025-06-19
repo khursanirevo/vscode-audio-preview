@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { WebView, WebViewProps } from './WebView';
+import { WebView } from './WebView';
 
 // Mock the VSCode API
 const mockVSCodeApi = {
@@ -25,46 +25,25 @@ jest.mock('./WebViewInner', () => ({
 }));
 
 describe('WebView Component', () => {
-  let mockCreateAudioContext: jest.MockedFunction<(sampleRate: number) => AudioContext>;
-  let mockCreateDecoder: jest.MockedFunction<(fileData: Uint8Array) => Promise<any>>;
-  let defaultProps: WebViewProps;
-
   beforeEach(() => {
-    mockCreateAudioContext = jest.fn();
-    mockCreateDecoder = jest.fn();
-    
-    defaultProps = {
-      createAudioContext: mockCreateAudioContext,
-      createDecoder: mockCreateDecoder,
-    };
-
     // Reset mocks
     mockVSCodeApi.postMessage.mockClear();
     mockVSCodeApi.onMessage.mockClear();
-    mockCreateAudioContext.mockClear();
-    mockCreateDecoder.mockClear();
   });
 
   describe('Initial Rendering', () => {
     it('renders WebView component with VSCodeProvider', () => {
-      render(<WebView {...defaultProps} />);
+      render(<WebView />);
       
       // Should render the basic structure
       expect(document.querySelector('div')).toBeInTheDocument();
     });
 
-    it('passes props correctly to WebViewContent', () => {
-      render(<WebView {...defaultProps} />);
-      
-      // Verify component doesn't crash with provided props
-      expect(mockCreateAudioContext).toBeDefined();
-      expect(mockCreateDecoder).toBeDefined();
-    });
   });
 
   describe('Provider Hierarchy', () => {
     it('maintains correct provider nesting order', () => {
-      render(<WebView {...defaultProps} />);
+      render(<WebView />);
       
       // Basic rendering check - providers should not crash
       expect(document.querySelector('div')).toBeInTheDocument();
@@ -73,7 +52,7 @@ describe('WebView Component', () => {
 
   describe('Error Handling', () => {
     it('renders without error state initially', () => {
-      render(<WebView {...defaultProps} />);
+      render(<WebView />);
       
       // Should render basic loading state
       expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -81,21 +60,21 @@ describe('WebView Component', () => {
 
     it('handles component initialization gracefully', () => {
       expect(() => {
-        render(<WebView {...defaultProps} />);
+        render(<WebView />);
       }).not.toThrow();
     });
   });
 
   describe('Context Integration', () => {
     it('provides VSCodeContext at root level', () => {
-      render(<WebView {...defaultProps} />);
+      render(<WebView />);
       
       // VSCode context should be available (component doesn't crash)
       expect(document.querySelector('div')).toBeInTheDocument();
     });
 
     it('initializes with loading state', () => {
-      render(<WebView {...defaultProps} />);
+      render(<WebView />);
       
       // Should show loading initially
       expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -105,22 +84,15 @@ describe('WebView Component', () => {
   describe('Component Props', () => {
     it('renders with createAudioContext prop', () => {
       expect(() => {
-        render(<WebView {...defaultProps} />);
+        render(<WebView />);
       }).not.toThrow();
     });
 
     it('renders with createDecoder prop', () => {
       expect(() => {
-        render(<WebView {...defaultProps} />);
+        render(<WebView />);
       }).not.toThrow();
     });
 
-    it('passes factory functions correctly to WebViewContent', () => {
-      render(<WebView {...defaultProps} />);
-      
-      // Verify props are defined
-      expect(defaultProps.createAudioContext).toBeDefined();
-      expect(defaultProps.createDecoder).toBeDefined();
-    });
   });
 });

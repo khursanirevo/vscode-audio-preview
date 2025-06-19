@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useEffect, useState, useRef, ReactNode } from 'react';
 import { ExtMessage, WebviewMessage, PostMessage, isExtConfigMessage, isExtDataMessage, isExtReloadMessage } from '../../messageTypes';
 import { Config } from '../../config';
 import { EventType } from '../events';
@@ -44,6 +44,11 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDataComplete, setIsDataComplete] = useState(false);
+  
+  // Use refs to avoid recreating handleMessage
+  const fileDataRef = useRef<Uint8Array | null>(null);
+  const isLoadingRef = useRef(true);
 
   // Initialize VS Code API only once
   const [vscode] = useState(() => getVSCodeApi());
@@ -71,9 +76,11 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
       case 'EXT_DATA':
         if (isExtDataMessage(msg)) {
           // Initialize fileData if first chunk
-          if (!fileData) {
+          if (!fileDataRef.current) {
             console.log('start receiving data');
-            setFileData(new Uint8Array(msg.payload.wholeLength));
+            const newData = new Uint8Array(msg.payload.wholeLength);
+            fileDataRef.current = newData;
+            setFileData(newData);
           }
 
           // Update fileData with new chunk
@@ -81,13 +88,13 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
             `received data: ${msg.payload.start} ~ ${msg.payload.end} / ${msg.payload.wholeLength}`
           );
           const samples = new Uint8Array(msg.payload.samples);
-          setFileData(currentData => {
-            if (currentData) {
-              currentData.set(samples, msg.payload.start);
-              return new Uint8Array(currentData); // Create new instance to trigger re-render
+          if (fileDataRef.current) {
+            fileDataRef.current.set(samples, msg.payload.start);
+            // Only update state for first and last chunk to avoid excessive re-renders
+            if (msg.payload.start === 0 || msg.payload.end >= msg.payload.wholeLength) {
+              setFileData(new Uint8Array(fileDataRef.current));
             }
-            return currentData;
-          });
+          }
 
           // Request next chunk if not complete
           if (msg.payload.end < msg.payload.wholeLength) {
@@ -97,7 +104,9 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
             });
           } else {
             console.log('finish receiving data');
+            isLoadingRef.current = false;
             setIsLoading(false);
+            setIsDataComplete(true);
           }
         }
         break;
@@ -106,7 +115,10 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
         // Reset state for reload
         setConfig(null);
         setFileData(null);
+        fileDataRef.current = null;
         setIsLoading(true);
+        isLoadingRef.current = true;
+        setIsDataComplete(false);
         setError(null);
         postMessage({ type: 'WV_CONFIG' });
         break;
@@ -114,7 +126,7 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
       default:
         console.warn('Unknown message type:', msg);
     }
-  }, [postMessage, fileData]);
+  }, [postMessage]);
 
   // Set up message listener
   useEffect(() => {
@@ -130,12 +142,12 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
 
   // Process file data to create audio buffer
   useEffect(() => {
-    if (!fileData || isLoading) return;
+    if (!fileDataRef.current || !isDataComplete) return;
 
     async function processAudio() {
       try {
         console.log('Creating decoder...');
-        const decoder = await Decoder.create(fileData);
+        const decoder = await Decoder.create(fileDataRef.current!);
 
         // Read header info
         console.log('Reading audio info...');
@@ -172,7 +184,7 @@ export function VSCodeProvider({ children }: VSCodeProviderProps) {
     }
 
     processAudio();
-  }, [fileData, isLoading]);
+  }, [isDataComplete]);
 
   const contextValue: VSCodeContextType = {
     postMessage,

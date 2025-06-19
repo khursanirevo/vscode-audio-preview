@@ -87,6 +87,7 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
   const lpfNodeRef = useRef<BiquadFilterNode | null>(null);
   const lastStartAcTimeRef = useRef<number>(0);
   const animationFrameIdRef = useRef<number>(0);
+  const tickRef = useRef<() => void>(() => {});
 
   // Initialize audio nodes
   useEffect(() => {
@@ -139,16 +140,27 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
 
     // Pause if finished playing
     if (current > audioBuffer.duration) {
-      pause();
+      // Stop audio directly without calling pause() to avoid circular dependency
+      if (sourceRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        sourceRef.current.stop();
+        sourceRef.current = null;
+      }
+      dispatch({ type: 'SET_PLAYING', payload: false });
       dispatch({ type: 'SET_CURRENT_SEC', payload: 0 });
       dispatch({ type: 'SET_SEEKBAR_VALUE', payload: 0 });
       return;
     }
 
-    if (state.isPlaying) {
-      animationFrameIdRef.current = requestAnimationFrame(tick);
+    if (state.isPlaying && tickRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(tickRef.current);
     }
   }, [state.isPlaying, state.currentSec, audioContext, audioBuffer]);
+
+  // Update the tick ref whenever tick changes
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
 
   const play = useCallback(() => {
     if (!audioBuffer || !gainNodeRef.current || !hpfNodeRef.current || !lpfNodeRef.current) {
@@ -183,8 +195,10 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     lastStartAcTimeRef.current = audioContext.currentTime;
     source.start(audioContext.currentTime, state.currentSec);
 
-    // Start animation frame updates
-    animationFrameIdRef.current = requestAnimationFrame(tick);
+    // Start animation frame updates using tickRef to avoid circular dependency
+    if (tickRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(tickRef.current);
+    }
   }, [
     audioContext, 
     audioBuffer, 
@@ -192,8 +206,7 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     playerSettings.enableHpf,
     playerSettings.hpfFrequency,
     playerSettings.enableLpf,
-    playerSettings.lpfFrequency,
-    tick
+    playerSettings.lpfFrequency
   ]);
 
   const pause = useCallback(() => {
@@ -233,13 +246,19 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
       // We need to delay the play call to allow state to update
       setTimeout(() => play(), 0);
     }
-  }, [audioBuffer, state.isPlaying, playerSettings.enableSeekToPlay, pause, play]);
+  }, [audioBuffer, state.isPlaying, playerSettings.enableSeekToPlay]);
 
   // Handle filter setting changes
   useEffect(() => {
-    if (state.isPlaying) {
+    // Only restart if currently playing and not during initial mount
+    if (state.isPlaying && audioBuffer) {
       pause();
-      setTimeout(() => play(), 0);
+      // Use a small delay to ensure clean restart
+      setTimeout(() => {
+        if (audioBuffer && !sourceRef.current) { // Only play if not already playing
+          play();
+        }
+      }, 10);
     }
   }, [
     playerSettings.enableHpf,
