@@ -82,7 +82,7 @@ export function Spectrogram({
   useEffect(() => {
     const mainCanvas = mainCanvasRef.current;
     const axisCanvas = axisCanvasRef.current;
-    if (!mainCanvas || !axisCanvas || !audioBuffer || !analyzeSettings) return;
+    if (!mainCanvas || !axisCanvas || !audioBuffer || !analyzeSettings || !analyze) return;
 
     const context = mainCanvas.getContext('2d', { alpha: false });
     const axisContext = axisCanvas.getContext('2d');

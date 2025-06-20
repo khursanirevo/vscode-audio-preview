@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import './Player.css';
@@ -7,13 +7,17 @@ export function Player() {
   const player = usePlayer();
   const playerSettings = usePlayerSettings();
   const [displayVolume, setDisplayVolume] = useState<string>('100');
+  const [currentVolumeValue, setCurrentVolumeValue] = useState<number>(100);
+  const userInputSeekBarRef = useRef<HTMLInputElement>(null);
 
-  // Update volume display when settings change
+  // Update volume display and current value when settings change
   useEffect(() => {
     if (playerSettings.volumeUnitDb) {
       setDisplayVolume(playerSettings.initialVolumeDb.toFixed(1));
+      setCurrentVolumeValue(playerSettings.initialVolumeDb);
     } else {
       setDisplayVolume(playerSettings.initialVolume.toString());
+      setCurrentVolumeValue(playerSettings.initialVolume);
     }
   }, [playerSettings.volumeUnitDb, playerSettings.initialVolumeDb, playerSettings.initialVolume]);
 
@@ -37,10 +41,12 @@ export function Player() {
       const vollin = voldb === -80 ? 0 : Math.pow(10, voldb / 20);
       player.setVolume(vollin);
       setDisplayVolume(vollin === 0 ? 'muted' : voldb.toFixed(1) + ' dB');
+      setCurrentVolumeValue(voldb);
     } else {
       // Convert seekbar value(0~100) to volume(0~1)
       player.setVolume(value / 100);
       setDisplayVolume(value.toString());
+      setCurrentVolumeValue(value);
     }
   }, [player, playerSettings.volumeUnitDb]);
 
@@ -49,7 +55,9 @@ export function Player() {
     const value = parseFloat(event.target.value);
     player.onSeekbarInput(value);
     // Reset the input value to 100 to handle duplicate inputs
-    event.target.value = '100';
+    if (userInputSeekBarRef.current) {
+      userInputSeekBarRef.current.value = '100';
+    }
   }, [player]);
 
   // Handle keyboard shortcuts
@@ -75,13 +83,13 @@ export function Player() {
   // Volume bar configuration
   const volumeBarProps = playerSettings.volumeUnitDb
     ? {
-        value: playerSettings.initialVolumeDb,
+        value: currentVolumeValue,
         min: -80,
         max: 0,
         step: 0.5,
       }
     : {
-        value: playerSettings.initialVolume,
+        value: currentVolumeValue,
         min: 0,
         max: 100,
         step: 1,
@@ -121,6 +129,7 @@ export function Player() {
           readOnly
         />
         <input
+          ref={userInputSeekBarRef}
           type="range"
           className="userInputSeekBar inputSeekBar"
           defaultValue={100}

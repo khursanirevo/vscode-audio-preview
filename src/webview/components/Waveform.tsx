@@ -33,7 +33,7 @@ export function Waveform({
   useEffect(() => {
     const mainCanvas = mainCanvasRef.current;
     const axisCanvas = axisCanvasRef.current;
-    if (!mainCanvas || !axisCanvas || !channelData || !analyzeSettings) return;
+    if (!mainCanvas || !axisCanvas || !channelData || !analyzeSettings || !analyze) return;
 
     const context = mainCanvas.getContext('2d', { alpha: false });
     const axisContext = axisCanvas.getContext('2d');

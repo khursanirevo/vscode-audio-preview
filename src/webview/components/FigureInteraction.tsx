@@ -248,8 +248,29 @@ export const FigureInteraction: React.FC<FigureInteractionProps> = ({
     if (Math.abs(dragStart.x - mouseUpX) < 3 && Math.abs(dragStart.y - mouseUpY) < 3) {
       // Seek to clicked position
       const xPercentInFigureRange = ((mouseUpX - rect.left) / rect.width) * 100;
+      
+      // Validate percentage
+      if (!isFinite(xPercentInFigureRange) || xPercentInFigureRange < 0 || xPercentInFigureRange > 100) {
+        console.warn('Invalid click position percentage:', xPercentInFigureRange);
+        return;
+      }
+      
       const sec = (xPercentInFigureRange / 100) * (maxTime - minTime) + minTime;
+      
+      // Validate calculated time
+      if (!isFinite(sec) || sec < 0 || sec >= audioBuffer.duration) {
+        console.warn('Invalid click time position:', sec, 'duration:', audioBuffer.duration);
+        return;
+      }
+      
       const percentInFullRange = (sec / audioBuffer.duration) * 100;
+      
+      // Validate final percentage
+      if (!isFinite(percentInFullRange) || percentInFullRange < 0 || percentInFullRange > 100) {
+        console.warn('Invalid final seek percentage:', percentInFullRange);
+        return;
+      }
+      
       setSeekbarPercent(percentInFullRange);
       return;
     }

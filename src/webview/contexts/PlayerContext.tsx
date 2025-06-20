@@ -87,7 +87,6 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
   const lpfNodeRef = useRef<BiquadFilterNode | null>(null);
   const lastStartAcTimeRef = useRef<number>(0);
   const animationFrameIdRef = useRef<number>(0);
-  const tickRef = useRef<() => void>(() => {});
 
   // Initialize audio nodes
   useEffect(() => {
@@ -139,7 +138,7 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     });
 
     // Pause if finished playing
-    if (current > audioBuffer.duration) {
+    if (current >= audioBuffer.duration) {
       // Stop audio directly without calling pause() to avoid circular dependency
       if (sourceRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
@@ -152,18 +151,18 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
       return;
     }
 
-    if (state.isPlaying && tickRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(tickRef.current);
-    }
+    // Continue animation frame if still playing
+    animationFrameIdRef.current = requestAnimationFrame(tick);
   }, [state.isPlaying, state.currentSec, audioContext, audioBuffer]);
-
-  // Update the tick ref whenever tick changes
-  useEffect(() => {
-    tickRef.current = tick;
-  }, [tick]);
 
   const play = useCallback(() => {
     if (!audioBuffer || !gainNodeRef.current || !hpfNodeRef.current || !lpfNodeRef.current) {
+      return;
+    }
+
+    // Validate current position
+    if (!isFinite(state.currentSec) || state.currentSec < 0 || state.currentSec >= audioBuffer.duration) {
+      console.warn('Invalid current position for play:', state.currentSec, 'duration:', audioBuffer.duration);
       return;
     }
 
@@ -195,10 +194,8 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     lastStartAcTimeRef.current = audioContext.currentTime;
     source.start(audioContext.currentTime, state.currentSec);
 
-    // Start animation frame updates using tickRef to avoid circular dependency
-    if (tickRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(tickRef.current);
-    }
+    // Start animation frame updates
+    animationFrameIdRef.current = requestAnimationFrame(tick);
   }, [
     audioContext, 
     audioBuffer, 
@@ -206,7 +203,8 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
     playerSettings.enableHpf,
     playerSettings.hpfFrequency,
     playerSettings.enableLpf,
-    playerSettings.lpfFrequency
+    playerSettings.lpfFrequency,
+    tick
   ]);
 
   const pause = useCallback(() => {
@@ -230,6 +228,12 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
   const onSeekbarInput = useCallback((value: number) => {
     if (!audioBuffer) return;
 
+    // Validate input value
+    if (!isFinite(value) || value < 0 || value > 100) {
+      console.warn('Invalid seekbar value:', value);
+      return;
+    }
+
     const resumeRequired = state.isPlaying;
 
     if (state.isPlaying) {
@@ -238,6 +242,13 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
 
     // Update seek position
     const newCurrentSec = (value * audioBuffer.duration) / 100;
+    
+    // Validate calculated position
+    if (!isFinite(newCurrentSec) || newCurrentSec < 0 || newCurrentSec >= audioBuffer.duration) {
+      console.warn('Invalid seek position:', newCurrentSec, 'duration:', audioBuffer.duration);
+      return;
+    }
+
     dispatch({ type: 'SET_CURRENT_SEC', payload: newCurrentSec });
     dispatch({ type: 'SET_SEEKBAR_VALUE', payload: value });
 
@@ -246,7 +257,7 @@ export function PlayerProvider({ audioContext, audioBuffer, children }: PlayerPr
       // We need to delay the play call to allow state to update
       setTimeout(() => play(), 0);
     }
-  }, [audioBuffer, state.isPlaying, playerSettings.enableSeekToPlay]);
+  }, [audioBuffer, state.isPlaying, playerSettings.enableSeekToPlay, pause, play]);
 
   // Handle filter setting changes
   useEffect(() => {

@@ -24,13 +24,13 @@ export function WebViewInner({ config, audioContext, audioBuffer, audioInfo }: W
     if (config.playerDefault && audioBuffer) {
       playerSettings.initializeFromDefault(config.playerDefault, audioBuffer);
     }
-  }, [config.playerDefault, audioBuffer]);
+  }, [config.playerDefault, audioBuffer, playerSettings.initializeFromDefault]);
 
   useEffect(() => {
     if (config.analyzeDefault && audioBuffer) {
       analyzeSettings.initializeFromDefault(config.analyzeDefault, audioBuffer);
     }
-  }, [config.analyzeDefault, audioBuffer]);
+  }, [config.analyzeDefault, audioBuffer, analyzeSettings.initializeFromDefault]);
 
   return (
     <PlayerProvider audioContext={audioContext} audioBuffer={audioBuffer}>

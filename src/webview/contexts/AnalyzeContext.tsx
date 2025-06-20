@@ -53,7 +53,7 @@ export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
 
   // Get spectrogram color based on amplitude
   const getSpectrogramColor = useCallback((amp: number, range: number): string => {
-    if (amp === null) {
+    if (amp === null || !isFinite(amp) || !isFinite(range) || range === 0) {
       return 'rgb(0,0,0)';
     }
     const classNum = 6;
@@ -214,9 +214,16 @@ export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
     }
 
     // Convert to dB scale
+    const minDb = -120; // Set minimum dB value to prevent -Infinity
     for (let i = 0; i < spectrogram.length; i++) {
       for (let j = 0; j < spectrogram[i].length; j++) {
-        spectrogram[i][j] = 10 * Math.log10(spectrogram[i][j] / maxValue);
+        const value = spectrogram[i][j] / maxValue;
+        if (value <= 0 || !isFinite(value) || maxValue <= Number.EPSILON) {
+          spectrogram[i][j] = minDb;
+        } else {
+          const db = 10 * Math.log10(value);
+          spectrogram[i][j] = isFinite(db) ? Math.max(db, minDb) : minDb;
+        }
       }
     }
 
@@ -298,9 +305,16 @@ export function AnalyzeProvider({ children }: AnalyzeProviderProps) {
     }
 
     // Convert to dB scale
+    const minDb = -120; // Set minimum dB value to prevent -Infinity
     for (let i = 0; i < spectrogram.length; i++) {
       for (let j = 0; j < spectrogram[i].length; j++) {
-        spectrogram[i][j] = 10 * Math.log10(spectrogram[i][j] / maxValue);
+        const value = spectrogram[i][j] / maxValue;
+        if (value <= 0 || !isFinite(value) || maxValue <= Number.EPSILON) {
+          spectrogram[i][j] = minDb;
+        } else {
+          const db = 10 * Math.log10(value);
+          spectrogram[i][j] = isFinite(db) ? Math.max(db, minDb) : minDb;
+        }
       }
     }
 
