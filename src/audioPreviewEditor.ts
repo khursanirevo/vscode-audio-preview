@@ -18,7 +18,21 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
     const dataFile =
       typeof backupId === "string" ? vscode.Uri.parse(backupId) : uri;
     const data = await AudioPreviewDocument.readFile(dataFile);
-    return new AudioPreviewDocument(uri, data);
+    const label = await AudioPreviewDocument.readLabelFile(uri);
+    return new AudioPreviewDocument(uri, data, label);
+  }
+
+  private static async readLabelFile(uri: vscode.Uri): Promise<string> {
+    if (uri.scheme === "untitled") {
+      return "";
+    }
+    const labelUri = vscode.Uri.file(uri.fsPath.replace(/\.[^/.]+$/, ".txt"));
+    try {
+      const labelData = await vscode.workspace.fs.readFile(labelUri);
+      return labelData.toString();
+    } catch (e) {
+      return "";
+    }
   }
 
   private static async readFile(uri: vscode.Uri): Promise<Uint8Array> {
@@ -30,15 +44,26 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
 
   private readonly _uri: vscode.Uri;
   private _documentData: Uint8Array;
+  private _labelData: string;
+
   public get documentData() {
     return this._documentData;
   }
+  public get labelData() {
+    return this._labelData;
+  }
+
   private _fsWatcher: vscode.FileSystemWatcher;
 
-  private constructor(uri: vscode.Uri, initialContent: Uint8Array) {
+  private constructor(
+    uri: vscode.Uri,
+    initialContent: Uint8Array,
+    labelContent: string,
+  ) {
     super();
     this._uri = uri;
     this._documentData = initialContent;
+    this._labelData = labelContent;
     this._fsWatcher = vscode.workspace.createFileSystemWatcher(
       uri.fsPath,
       true,
@@ -56,6 +81,7 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
 
   public async reload() {
     this._documentData = await AudioPreviewDocument.readFile(this.uri);
+    this._labelData = await AudioPreviewDocument.readLabelFile(this.uri);
   }
 
   private readonly _onDidDispose = this._register(
@@ -90,7 +116,7 @@ export class AudioPreviewEditorProvider
     );
   }
 
-  private static readonly viewType = "wavPreview.audioPreview";
+  private static readonly viewType = "audioLabeller.audioPreview";
 
   private readonly webviews = new WebviewCollection();
 
@@ -158,7 +184,7 @@ export class AudioPreviewEditorProvider
     switch (msg.type) {
       case WebviewMessageType.CONFIG: {
         // read config
-        const config = vscode.workspace.getConfiguration("WavPreview");
+        const config = vscode.workspace.getConfiguration("AudioLabeller");
         this.postMessage(webviewPanel.webview, {
           type: ExtMessageType.CONFIG,
           data: {
@@ -215,6 +241,27 @@ export class AudioPreviewEditorProvider
         if (WebviewMessageType.isERROR(msg)) {
           vscode.window.showErrorMessage(msg.data.message);
         }
+        break;
+
+      case WebviewMessageType.GET_LABEL:
+        this.postMessage(webviewPanel.webview, {
+          type: ExtMessageType.LABEL,
+          data: document.labelData,
+        });
+        break;
+
+      case WebviewMessageType.SAVE_LABEL:
+        if (WebviewMessageType.isSaveLabel(msg)) {
+          const labelUri = vscode.Uri.file(
+            document.uri.fsPath.replace(/\.[^/.]+$/, ".txt"),
+          );
+          const content = new TextEncoder().encode(msg.data);
+          await vscode.workspace.fs.writeFile(labelUri, content);
+          vscode.window.showInformationMessage(
+            `Success! Label file written to: ${labelUri.fsPath}`,
+          );
+        }
+        break;
     }
   }
 
@@ -248,7 +295,7 @@ export class AudioPreviewEditorProvider
                 
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 
-                <title>Wav Preview</title>
+                <title>Audio Labeller</title>
             </head>
             <body>
                 <div id="root"></div>

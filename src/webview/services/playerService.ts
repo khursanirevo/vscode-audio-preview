@@ -114,6 +114,8 @@ export default class PlayerService extends Service {
     this._source.buffer = this._audioBuffer;
     this._source.connect(lastNode);
 
+    this._source.playbackRate.value = this._playerSettingsService.playbackRate;
+
     // play
     this._isPlaying = true;
     this._lastStartAcTime = this._audioContext.currentTime;
@@ -138,7 +140,9 @@ export default class PlayerService extends Service {
 
     // pause
     this._source.stop();
-    this._currentSec += this._audioContext.currentTime - this._lastStartAcTime;
+    this._currentSec +=
+      (this._audioContext.currentTime - this._lastStartAcTime) *
+      this._playerSettingsService.playbackRate;
     this._isPlaying = false;
     this._source = undefined;
 
@@ -154,7 +158,9 @@ export default class PlayerService extends Service {
 
   public tick() {
     const current =
-      this._currentSec + this._audioContext.currentTime - this._lastStartAcTime;
+      this._currentSec +
+      (this._audioContext.currentTime - this._lastStartAcTime) *
+        this._playerSettingsService.playbackRate;
     this._seekbarValue = (100 * current) / this._audioBuffer.duration;
 
     // update seek bar value

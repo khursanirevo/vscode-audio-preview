@@ -430,7 +430,22 @@ export default class AnalyzeSettingsService extends Service {
     setting.windowSizeIndex = defaultSetting.windowSizeIndex;
 
     // init frequency scale
-    setting.frequencyScale = defaultSetting.frequencyScale;
+    const toFrequencyScale = (
+      value: "linear" | "log" | number,
+    ): FrequencyScale => {
+      if (typeof value === "number") {
+        return value;
+      }
+      switch (value) {
+        case "linear":
+          return FrequencyScale.Linear;
+        case "log":
+          return FrequencyScale.Log;
+        default:
+          return FrequencyScale.Linear;
+      }
+    };
+    setting.frequencyScale = toFrequencyScale(defaultSetting.frequencyScale);
 
     // init mel filter num
     setting.melFilterNum = defaultSetting.melFilterNum;

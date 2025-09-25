@@ -126,6 +126,19 @@ export default class PlayerSettingsService extends Service {
     );
   }
 
+  private _playbackRate: number;
+  public get playbackRate() {
+    return this._playbackRate;
+  }
+  public set playbackRate(value: number) {
+    this._playbackRate = value === undefined ? 1.0 : value; // 1.0 by default
+    this.dispatchEvent(
+      new CustomEvent(EventType.PS_UPDATE_PLAYBACK_RATE, {
+        detail: { value: this._playbackRate },
+      }),
+    );
+  }
+
   private _matchFilterFrequencyToSpectrogram: boolean;
   public get matchFilterFrequencyToSpectrogram() {
     return this._matchFilterFrequencyToSpectrogram;
@@ -154,6 +167,7 @@ export default class PlayerSettingsService extends Service {
     enableLpf: boolean,
     lpfFrequency: number,
     matchFilterFrequencyToSpectrogram: boolean,
+    playbackRate: number,
   ) {
     super();
     this._volumeUnitDb = volumeUnitDb;
@@ -166,6 +180,7 @@ export default class PlayerSettingsService extends Service {
     this._enableLpf = enableLpf;
     this._lpfFrequency = lpfFrequency;
     this._matchFilterFrequencyToSpectrogram = matchFilterFrequencyToSpectrogram;
+    this._playbackRate = playbackRate;
   }
 
   public static fromDefaultSetting(
@@ -184,10 +199,14 @@ export default class PlayerSettingsService extends Service {
       false,
       this.FILTER_FREQUENCY_LPF_DEFAULT,
       false,
+      1.0,
     );
 
     // set sample rate of audio buffer to instance
     setting._sampleRate = audioBuffer.sampleRate;
+
+    // init playback rate
+    setting.playbackRate = defaultSetting.playbackRate;
 
     // init volume unit
     setting.volumeUnitDb = defaultSetting.volumeUnitDb;

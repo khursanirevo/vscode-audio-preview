@@ -4,6 +4,11 @@
   gap: 0.5em;
 }
 
+#infoTable {
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+
 #settingTab {
   grid-column-start: 1;
   grid-column-end: 3;

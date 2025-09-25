@@ -1,12 +1,12 @@
 {
-  "name": "wav-preview",
-  "displayName": "audio-preview",
+  "name": "audio-labeller",
+  "displayName": "audio-labeller",
   "description": "play & preview audio file in VS Code. (wav,mp3,ogg,aac,flac,...etc)",
   "version": "2.6.0",
   "engines": {
     "vscode": "^1.59.1"
   },
-  "publisher": "sukumo28",
+  "publisher": "sani",
   "categories": [
     "Other"
   ],
@@ -23,20 +23,20 @@
   "icon": "audio-preview.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sukumo28/vscode-audio-preview.git"
+    "url": "https://github.com/sani/vscode-audio-labeller.git"
   },
   "bugs": {
-    "url": "https://github.com/sukumo28/vscode-audio-preview.git"
+    "url": "https://github.com/sani/vscode-audio-labeller.git"
   },
   "activationEvents": [
-    "onCustomEditor:wavPreview.audioPreview"
+    "onCustomEditor:audioLabeller.audioPreview"
   ],
   "main": "./dist/extension.js",
   "browser": "./dist/web/extension.js",
   "contributes": {
     "customEditors": [
       {
-        "viewType": "wavPreview.audioPreview",
+        "viewType": "audioLabeller.audioPreview",
         "displayName": "Audio Preview",
         "selector": [
           {
@@ -68,19 +68,19 @@
       }
     ],
     "configuration": {
-      "title": "WavPreview",
+      "title": "AudioLabeller",
       "properties": {
-        "WavPreview.autoAnalyze": {
+        "AudioLabeller.autoAnalyze": {
           "type": "boolean",
           "default": false,
           "description": "automatically analyze audio file when you open it"
         },
-        "WavPreview.playerDefault": {
+        "AudioLabeller.playerDefault": {
           "type": "object",
           "default": {},
           "description": "default values of player settings"
         },
-        "WavPreview.analyzeDefault": {
+        "AudioLabeller.analyzeDefault": {
           "type": "object",
           "default": {},
           "description": "default values of analyze settings"

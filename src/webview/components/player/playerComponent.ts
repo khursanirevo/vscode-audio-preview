@@ -40,8 +40,39 @@ export default class PlayerComponent extends Component {
             <input type="range" class="seekBar" value="0" />
             <input type="range" class="userInputSeekBar inputSeekBar" value="0" />
         </div>
+
+        <div id="playbackRateBox">
+          <label for="playbackRate" class="playbackRateText">playback rate</label>
+          <select id="playbackRate" name="playbackRate">
+            <option value="0.125">0.125x</option>
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1.0" selected>1.0x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2.0">2.0x</option>
+          </select>
+        </div>
       </div>
     `;
+
+    // init playback rate dropdown
+    const playbackRateDropdown = this._componentRoot.querySelector(
+      "#playbackRate",
+    ) as HTMLSelectElement;
+    this._addEventlistener(playbackRateDropdown, EventType.CHANGE, () => {
+      this._playerSettingsService.playbackRate = Number(
+        playbackRateDropdown.value,
+      );
+    });
+    this._addEventlistener(
+      this._playerSettingsService,
+      EventType.PS_UPDATE_PLAYBACK_RATE,
+      (e: CustomEventInit) => {
+        playbackRateDropdown.value = e.detail.value.toFixed(3);
+      },
+    );
+    this._playerSettingsService.playbackRate = 1.0;
 
     // init main seekbar event
     // To avoid inconvenience when the timing of user input overlaps with the change in value over time,

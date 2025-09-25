@@ -5,6 +5,7 @@ export class ExtMessageType {
   public static readonly CONFIG = "CONFIG";
   public static readonly DATA = "DATA";
   public static readonly RELOAD = "RELOAD";
+  public static readonly LABEL = "LABEL";
 
   public static isCONFIG(msg: ExtMessage): msg is ExtConfigMessage {
     return msg.type === ExtMessageType.CONFIG;
@@ -17,13 +18,26 @@ export class ExtMessageType {
   public static isRELOAD(msg: ExtMessage): msg is ExtReloadMessage {
     return msg.type === ExtMessageType.RELOAD;
   }
+
+  public static isLABEL(msg: ExtMessage): msg is ExtLabelMessage {
+    return msg.type === ExtMessageType.LABEL;
+  }
 }
 
-export type ExtMessage = ExtConfigMessage | ExtDataMessage | ExtReloadMessage;
+export type ExtMessage =
+  | ExtConfigMessage
+  | ExtDataMessage
+  | ExtReloadMessage
+  | ExtLabelMessage;
 
 export class ExtConfigMessage {
   type = ExtMessageType.CONFIG;
   data: Config;
+}
+
+export class ExtLabelMessage {
+  type = ExtMessageType.LABEL;
+  data: string;
 }
 
 export class ExtDataMessage {
@@ -48,6 +62,8 @@ export class WebviewMessageType {
   public static readonly DATA = "DATA";
   public static readonly WRITE_WAV = "WRITE_WAV";
   public static readonly ERROR = "RELOAD";
+  public static readonly GET_LABEL = "GET_LABEL";
+  public static readonly SAVE_LABEL = "SAVE_LABEL";
 
   public static isCONFIG(msg: WebviewMessage): msg is WebviewConfigMessage {
     return msg.type === WebviewMessageType.CONFIG;
@@ -64,16 +80,37 @@ export class WebviewMessageType {
   public static isERROR(msg: WebviewMessage): msg is WebviewErrorMessage {
     return msg.type === WebviewMessageType.ERROR;
   }
+
+  public static isGetLabel(msg: WebviewMessage): msg is WebviewGetLabelMessage {
+    return msg.type === WebviewMessageType.GET_LABEL;
+  }
+
+  public static isSaveLabel(
+    msg: WebviewMessage,
+  ): msg is WebviewSaveLabelMessage {
+    return msg.type === WebviewMessageType.SAVE_LABEL;
+  }
 }
 
 export type WebviewMessage =
   | WebviewConfigMessage
   | WebviewDataMessage
   | WebviewWriteWavMessage
-  | WebviewErrorMessage;
+  | WebviewErrorMessage
+  | WebviewGetLabelMessage
+  | WebviewSaveLabelMessage;
 
 export class WebviewConfigMessage {
   type = WebviewMessageType.CONFIG;
+}
+
+export class WebviewGetLabelMessage {
+  type = WebviewMessageType.GET_LABEL;
+}
+
+export class WebviewSaveLabelMessage {
+  type = WebviewMessageType.SAVE_LABEL;
+  data: string;
 }
 
 export class WebviewDataMessage {

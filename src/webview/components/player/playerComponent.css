@@ -31,3 +31,10 @@
   padding: 0;
   opacity: 0;
 }
+
+#playbackRateBox {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}

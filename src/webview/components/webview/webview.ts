@@ -17,12 +17,14 @@ import InfoTableComponent from "../infoTable/infoTableComponent";
 import PlayerComponent from "../player/playerComponent";
 import SettingTab from "../settingTab/settingTabComponent";
 import AnalyzerComponent from "../analyzer/analyzerComponent";
+import LabelComponent from "../label/labelComponent";
 
 type CreateAudioContext = (sampleRate: number) => AudioContext;
 type CreateDecoder = (fileData: Uint8Array) => Promise<Decoder>;
 
 export default class WebView extends Component {
   private _fileData: Uint8Array;
+  private _labelData: string;
 
   private _postMessage: PostMessage;
   private _createAudioContext: CreateAudioContext;
@@ -45,6 +47,7 @@ export default class WebView extends Component {
   private initWebview() {
     this._isDisposed = false;
     this._fileData = undefined;
+    this._labelData = undefined;
 
     this._addEventlistener(
       window,
@@ -56,6 +59,7 @@ export default class WebView extends Component {
     root.innerHTML = `
       <div id="infoTable"></div>
       <div id="player"></div>
+      <div id="label"></div>
       <div id="settingTab"></div>
       <div id="analyzer"></div>
     `;
@@ -69,10 +73,17 @@ export default class WebView extends Component {
         if (ExtMessageType.isCONFIG(msg)) {
           this._config = msg.data;
           console.log(msg.data);
+          this._postMessage({ type: WebviewMessageType.GET_LABEL });
           this._postMessage({
             type: WebviewMessageType.DATA,
             data: { start: 0, end: 500000 },
           });
+        }
+        break;
+
+      case ExtMessageType.LABEL:
+        if (ExtMessageType.isLABEL(msg)) {
+          this._labelData = msg.data;
         }
         break;
 
@@ -200,6 +211,11 @@ export default class WebView extends Component {
       this._config.autoAnalyze,
     );
     this._disposables.push(analyzerComponent);
+
+    // init label
+    const labelComponent = new LabelComponent("#label", this._postMessage);
+    labelComponent.setLabel(this._labelData);
+    this._disposables.push(labelComponent);
 
     // dispose decoder
     decoder.dispose();

@@ -1,12 +1,12 @@
-# audio-preview
+# audio-labeller
 
 You can play your audio file and preview its info on VS Code.  
 You can also check waveform and spectrogram.
 
 Supported Audio Files: `wav`, `mp3`, `aac`, `ogg`, `flac`, `opus`, `m4a`, `sph` ... etc.
 
-Available on Marketplace: https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview  
-Repository: https://github.com/sukumo28/vscode-audio-preview
+Available on Marketplace: https://marketplace.visualstudio.com/items?itemName=sani.audio-labeller  
+Repository: https://github.com/sani/vscode-audio-labeller
 
 > **Note**  
 > Please consider using the built-in audio playback feature as well.
@@ -17,7 +17,7 @@ Repository: https://github.com/sukumo28/vscode-audio-preview
 ## Features
 
 How to preview audio.  
-![how-to-use](https://github.com/sukumo28/vscode-audio-preview/blob/main/images/how-to-use.gif?raw=true)
+![how-to-use](https://github.com/sani/vscode-audio-labeller/blob/main/images/how-to-use.gif?raw=true)
 
 - If you want to display only a specific range of graphs, dragging on the graph will re-run analyze on the selected range.
 
@@ -31,12 +31,21 @@ How to preview audio.
 
 - If you want to specify the numerical values in detail, you can set the values in the analyze tab found in the settings tab.
 
+## Labeling
+
+You can add labels to your audio files.
+The label is a text file with the same name as the audio file, but with a `.txt` extension.
+When you open an audio file, the extension will automatically look for a corresponding `.txt` file in the same directory.
+If it finds one, it will display the content in the label section.
+You can edit the label and save it by clicking the "Save Label" button.
+If the `.txt` file does not exist, a new one will be created when you save the label.
+
 If this extension does not open by default, edit `settings.json` like below.
 
 ```jsonc
 "workbench.editorAssociations": {
-    "*.wav": "wavPreview.audioPreview",
-    "*.mp3": "wavPreview.audioPreview",
+    "*.wav": "audioLabeller.audioPreview",
+    "*.mp3": "audioLabeller.audioPreview",
     ...
 },
 ```
@@ -50,20 +59,20 @@ There is no need to configure anything if you are just using this extension.
 You can analyze audio automatically when you open it.
 
 ```jsonc
-"WavPreview.autoAnalyze": true
+"AudioLabeller.autoAnalyze": true
 ```
 
 You can set the default values for the settings displayed in the settings tab as shown below.  
-To check all items, please refer to [here](https://github.com/sukumo28/vscode-audio-preview/blob/main/src/config.ts).
+To check all items, please refer to [here](https://github.com/sani/vscode-audio-labeller/blob/main/src/config.ts).
 
 ```jsonc
-"WavPreview.playerDefault": {
+"AudioLabeller.playerDefault": {
   "initialVolume": 50
 }
 ```
 
 ```jsonc
-"WavPreview.analyzeDefault": {
+"AudioLabeller.analyzeDefault": {
   "spectrogramVisible": false
 }
 ```
@@ -102,6 +111,10 @@ Linter
 Formatter  
 `npm run format`  
 This is automatically applied upon saving due to the settings in the .vscode/settings.json of this project, so there is generally no need to run it manually.
+
+## Acknowledgements
+
+This extension is a fork of [audio-preview](https://github.com/sukumo28/vscode-audio-preview) by sukumo28.
 
 ### References
 
