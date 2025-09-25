@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.7.0 - 2025-09-25
+
+### Added
+
+- Add playback speed control to the player.
+
 ## 2.6.0 - 2024-07-15
 
 ### Added

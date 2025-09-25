@@ -1,4 +1,9 @@
-import { ExtMessageType, WebviewMessageType } from "../../../message";
+import {
+  ExtMessageType,
+  WebviewMessageType,
+  WebviewMessage,
+  ExtMessage,
+} from "../../../message";
 import Decoder from "../../decoder";
 import Webview from "./webview";
 import {
@@ -7,7 +12,9 @@ import {
   postMessageFromExt,
   createAudioContext,
   wait,
+  webviewMessageTarget,
 } from "../../../__mocks__/helper";
+import { EventType } from "../../events";
 import PlayerSettingsService from "../../services/playerSettingsService";
 
 describe("webview", () => {
@@ -51,41 +58,61 @@ describe("webview", () => {
   });
 
   test("request data after getting config", async () => {
-    const msg = await waitVSCodeMessageForAction(() => {
-      postMessageFromExt({
-        type: ExtMessageType.CONFIG,
-        data: {
-          autoAnalyze: false,
-          playerDefault: {
-            volumeUnitDb: undefined,
-            initialVolumeDb: 0.0,
-            initialVolume: 1.0,
-            enableSpacekeyPlay: true,
-            enableSeekToPlay: true,
-            enableHpf: false,
-            hpfFrequency: PlayerSettingsService.FILTER_FREQUENCY_HPF_DEFAULT,
-            enableLpf: false,
-            lpfFrequency: PlayerSettingsService.FILTER_FREQUENCY_LPF_DEFAULT,
-            matchFilterFrequencyToSpectrogram: false,
+    const messages = await new Promise<(ExtMessage | WebviewMessage)[]>(
+      (resolve) => {
+        const receivedMessages: (ExtMessage | WebviewMessage)[] = [];
+        const listener = (e: MessageEvent<ExtMessage | WebviewMessage>) => {
+          receivedMessages.push(e.data);
+          if (receivedMessages.length === 2) {
+            webviewMessageTarget.removeEventListener(
+              EventType.VSCODE_MESSAGE,
+              listener,
+            );
+            resolve(receivedMessages);
+          }
+        };
+        webviewMessageTarget.addEventListener(
+          EventType.VSCODE_MESSAGE,
+          listener,
+        );
+
+        postMessageFromExt({
+          type: ExtMessageType.CONFIG,
+          data: {
+            autoAnalyze: false,
+            playerDefault: {
+              volumeUnitDb: undefined,
+              initialVolumeDb: 0.0,
+              initialVolume: 1.0,
+              enableSpacekeyPlay: true,
+              enableSeekToPlay: true,
+              enableHpf: false,
+              hpfFrequency: PlayerSettingsService.FILTER_FREQUENCY_HPF_DEFAULT,
+              enableLpf: false,
+              lpfFrequency: PlayerSettingsService.FILTER_FREQUENCY_LPF_DEFAULT,
+              matchFilterFrequencyToSpectrogram: false,
+            },
+            analyzeDefault: {
+              waveformVisible: undefined,
+              waveformVerticalScale: undefined,
+              spectrogramVisible: undefined,
+              spectrogramVerticalScale: undefined,
+              windowSizeIndex: undefined,
+              minAmplitude: undefined,
+              maxAmplitude: undefined,
+              minFrequency: undefined,
+              maxFrequency: undefined,
+              spectrogramAmplitudeRange: undefined,
+              frequencyScale: undefined,
+              melFilterNum: undefined,
+            },
           },
-          analyzeDefault: {
-            waveformVisible: undefined,
-            waveformVerticalScale: undefined,
-            spectrogramVisible: undefined,
-            spectrogramVerticalScale: undefined,
-            windowSizeIndex: undefined,
-            minAmplitude: undefined,
-            maxAmplitude: undefined,
-            minFrequency: undefined,
-            maxFrequency: undefined,
-            spectrogramAmplitudeRange: undefined,
-            frequencyScale: undefined,
-            melFilterNum: undefined,
-          },
-        },
-      });
-    });
-    expect(msg).toEqual({
+        });
+      },
+    );
+
+    expect(messages).toContainEqual({ type: WebviewMessageType.GET_LABEL });
+    expect(messages).toContainEqual({
       type: WebviewMessageType.DATA,
       data: { start: 0, end: 500000 },
     });

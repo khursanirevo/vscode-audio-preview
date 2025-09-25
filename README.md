@@ -19,6 +19,8 @@ Repository: https://github.com/sani/vscode-audio-labeller
 How to preview audio.  
 ![how-to-use](https://github.com/sani/vscode-audio-labeller/blob/main/images/how-to-use.gif?raw=true)
 
+- You can control the playback speed of the audio.
+
 - If you want to display only a specific range of graphs, dragging on the graph will re-run analyze on the selected range.
 
   - By pressing the Ctrl key when dragging, you can select only the time range.

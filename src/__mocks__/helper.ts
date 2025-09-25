@@ -16,7 +16,7 @@ export function postMessageFromExt(message: ExtMessage) {
 }
 
 // Use different targets to prevent webview from receiving its own messages
-const webviewMessageTarget = document.createElement("div");
+export const webviewMessageTarget = document.createElement("div");
 
 export function postMessageFromWebview(message: WebviewMessage) {
   postMessage(webviewMessageTarget, message);
@@ -143,6 +143,12 @@ class MockBiquadFilterNode extends MockAudioNode {
 
 class MockAudioBufferSourceNode extends MockAudioNode {
   buffer: MockAudioBuffer;
+  playbackRate: MockAudioParam;
+
+  constructor() {
+    super();
+    this.playbackRate = { value: 1 };
+  }
 
   start(): void {}
 
@@ -186,6 +192,39 @@ class MockAudioContext extends MockAudioNode {
 export function createAudioContext(sampleRate: number) {
   return new MockAudioContext(sampleRate) as unknown as AudioContext;
 }
+
+export const mockWebAudioApi = () => {
+  global.AudioContext = jest.fn().mockImplementation(() => {
+    return {
+      createBufferSource: jest.fn().mockImplementation(() => {
+        return {
+          buffer: null,
+          connect: jest.fn(),
+          start: jest.fn(),
+          stop: jest.fn(),
+          playbackRate: { value: 1 },
+        };
+      }),
+      createGain: jest.fn().mockImplementation(() => {
+        return {
+          connect: jest.fn(),
+          gain: { value: 1 },
+        };
+      }),
+      createBiquadFilter: jest.fn().mockImplementation(() => {
+        return {
+          connect: jest.fn(),
+          type: "",
+          Q: { value: 1 },
+          frequency: { value: 440 },
+        };
+      }),
+      destination: null,
+      currentTime: 0,
+    };
+  });
+};
+
 
 export async function wait(ms: number) {
   return new Promise<void>((resolve) => {
