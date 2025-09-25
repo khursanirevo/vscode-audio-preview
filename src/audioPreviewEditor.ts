@@ -104,9 +104,10 @@ export class AudioPreviewEditorProvider
   implements vscode.CustomReadonlyEditorProvider
 {
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    return vscode.window.registerCustomEditorProvider(
+    const provider = new AudioPreviewEditorProvider(context);
+    const providerRegistration = vscode.window.registerCustomEditorProvider(
       AudioPreviewEditorProvider.viewType,
-      new AudioPreviewEditorProvider(context),
+      provider,
       {
         supportsMultipleEditorsPerDocument: false,
         webviewOptions: {
@@ -114,7 +115,29 @@ export class AudioPreviewEditorProvider
         },
       },
     );
+
+    const commandRegistration = vscode.commands.registerCommand(
+      "audioLabeller.activeLearning",
+      () => {
+        provider.showActiveLearningView();
+      },
+    );
+
+    return vscode.Disposable.from(providerRegistration, commandRegistration);
   }
+
+  private showActiveLearningView() {
+    const panel = vscode.window.createWebviewPanel(
+      "audioLabeller.activeLearning",
+      "Active Learning",
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+      },
+    );
+    panel.webview.html = this.getHtmlForWebview(panel.webview, "activeLearning.js");
+  }
+
 
   private static readonly viewType = "audioLabeller.audioPreview";
 
@@ -188,7 +211,7 @@ export class AudioPreviewEditorProvider
         this.postMessage(webviewPanel.webview, {
           type: ExtMessageType.CONFIG,
           data: {
-            autoAnalyze: config.get("autoAnalyze"),
+            autoAnalyze: config.get("autoAnalyze") as boolean,
             playerDefault: config.get("playerDefault") as PlayerDefault,
             analyzeDefault: config.get("analyzeDefault") as AnalyzeDefault,
           },
@@ -262,8 +285,63 @@ export class AudioPreviewEditorProvider
           );
         }
         break;
+
+      case WebviewMessageType.SCAN_WORKSPACE:
+        const files = await this.scanWorkspace();
+        this.postMessage(webviewPanel.webview, {
+          type: ExtMessageType.SCAN_WORKSPACE_RESULT,
+          data: files,
+        });
+        break;
+
+      case WebviewMessageType.OPEN_FILE:
+        if (WebviewMessageType.isOpen(msg)) {
+          const uri = vscode.Uri.file(msg.data);
+          vscode.commands.executeCommand("vscode.open", uri);
+        }
+        break;
     }
   }
+
+  private async scanWorkspace(): Promise<{ [key: string]: { audio: string, reference: string, hypotheses: { [model: string]: string } } }> {
+    const audioFiles = await vscode.workspace.findFiles("**/*.{wav,mp3}");
+    const results: { [key: string]: { audio: string, reference: string, hypotheses: { [model: string]: string } } } = {};
+
+    for (const audioFile of audioFiles) {
+      const audioPath = audioFile.fsPath;
+      const referencePath = audioPath.replace(/\.[^/.]+$/, ".txt");
+      const referenceUri = vscode.Uri.file(referencePath);
+
+      try {
+        const referenceContent = await vscode.workspace.fs.readFile(referenceUri);
+        const hypotheses: { [model: string]: string } = {};
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(audioFile);
+        if (workspaceFolder) {
+          const pattern = new vscode.RelativePattern(workspaceFolder, `${vscode.workspace.asRelativePath(audioFile).replace(/\.[^/.]+$/, ".*.txt")}`);
+          const hypothesisFiles = await vscode.workspace.findFiles(pattern);
+
+          for (const hypothesisFile of hypothesisFiles) {
+            const modelMatch = hypothesisFile.fsPath.match(/\.([^/.]+)\.txt$/);
+            if (modelMatch) {
+              const model = modelMatch[1];
+              const hypothesisContent = await vscode.workspace.fs.readFile(hypothesisFile);
+              hypotheses[model] = hypothesisContent.toString();
+            }
+          }
+        }
+        results[audioPath] = {
+          audio: audioPath,
+          reference: referenceContent.toString(),
+          hypotheses,
+        };
+      } catch (e) {
+        // ignore if no reference file is found
+      }
+    }
+    return results;
+  }
+
+
 
   private postMessage(webview: vscode.Webview, message: ExtMessage) {
     webview.postMessage(message);
@@ -272,13 +350,13 @@ export class AudioPreviewEditorProvider
   /**
    * Get the static HTML used for in our editor's webviews.
    */
-  private getHtmlForWebview(webview: vscode.Webview): string {
+  private getHtmlForWebview(webview: vscode.Webview, scriptName = "audioPreview.js"): string {
     // Local path to script and css for the webview
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this._context.extensionUri,
         "dist",
-        "audioPreview.js",
+        scriptName,
       ),
     );
 
@@ -305,6 +383,7 @@ export class AudioPreviewEditorProvider
         `;
   }
 }
+
 
 /**
  * Tracks all webviews.

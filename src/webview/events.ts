@@ -28,6 +28,8 @@ export enum EventType {
   AS_UPDATE_MIN_AMPLITUDE = "as-update-min-amplitude",
   AS_UPDATE_MAX_AMPLITUDE = "as-update-max-amplitude",
   AS_UPDATE_SPECTROGRAM_AMPLITUDE_RANGE = "as-update-spectrogram-amplitude-range",
+  // active learning
+  AL_UPDATE_RESULTS = "al-update-results",
   // other
   CLICK = "click",
   CHANGE = "change",

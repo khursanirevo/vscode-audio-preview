@@ -6,6 +6,7 @@ export class ExtMessageType {
   public static readonly DATA = "DATA";
   public static readonly RELOAD = "RELOAD";
   public static readonly LABEL = "LABEL";
+  public static readonly SCAN_WORKSPACE_RESULT = "SCAN_WORKSPACE_RESULT";
 
   public static isCONFIG(msg: ExtMessage): msg is ExtConfigMessage {
     return msg.type === ExtMessageType.CONFIG;
@@ -22,13 +23,18 @@ export class ExtMessageType {
   public static isLABEL(msg: ExtMessage): msg is ExtLabelMessage {
     return msg.type === ExtMessageType.LABEL;
   }
+
+  public static isScanWorkspaceResult(msg: ExtMessage): msg is ExtScanWorkspaceResultMessage {
+    return msg.type === ExtMessageType.SCAN_WORKSPACE_RESULT;
+  }
 }
 
 export type ExtMessage =
   | ExtConfigMessage
   | ExtDataMessage
   | ExtReloadMessage
-  | ExtLabelMessage;
+  | ExtLabelMessage
+  | ExtScanWorkspaceResultMessage;
 
 export class ExtConfigMessage {
   type = ExtMessageType.CONFIG;
@@ -56,6 +62,11 @@ export class ExtReloadMessage {
   type = ExtMessageType.RELOAD;
 }
 
+export class ExtScanWorkspaceResultMessage {
+  type = ExtMessageType.SCAN_WORKSPACE_RESULT;
+  data: { [key: string]: { audio: string, reference: string, hypotheses: { [model: string]: string } } };
+}
+
 // Type of messages from Webview to Extension
 export class WebviewMessageType {
   public static readonly CONFIG = "CONFIG";
@@ -64,6 +75,8 @@ export class WebviewMessageType {
   public static readonly ERROR = "RELOAD";
   public static readonly GET_LABEL = "GET_LABEL";
   public static readonly SAVE_LABEL = "SAVE_LABEL";
+  public static readonly SCAN_WORKSPACE = "SCAN_WORKSPACE";
+  public static readonly OPEN_FILE = "OPEN_FILE";
 
   public static isCONFIG(msg: WebviewMessage): msg is WebviewConfigMessage {
     return msg.type === WebviewMessageType.CONFIG;
@@ -90,6 +103,14 @@ export class WebviewMessageType {
   ): msg is WebviewSaveLabelMessage {
     return msg.type === WebviewMessageType.SAVE_LABEL;
   }
+
+  public static isScanWorkspace(msg: WebviewMessage): msg is WebviewScanWorkspaceMessage {
+    return msg.type === WebviewMessageType.SCAN_WORKSPACE;
+  }
+
+  public static isOpen(msg: WebviewMessage): msg is WebviewOpenFileMessage {
+    return msg.type === WebviewMessageType.OPEN_FILE;
+  }
 }
 
 export type WebviewMessage =
@@ -98,7 +119,9 @@ export type WebviewMessage =
   | WebviewWriteWavMessage
   | WebviewErrorMessage
   | WebviewGetLabelMessage
-  | WebviewSaveLabelMessage;
+  | WebviewSaveLabelMessage
+  | WebviewScanWorkspaceMessage
+  | WebviewOpenFileMessage;
 
 export class WebviewConfigMessage {
   type = WebviewMessageType.CONFIG;
@@ -140,6 +163,15 @@ export class WebviewErrorMessage {
 
 export interface WebviewErrorMessageData {
   message: string;
+}
+
+export class WebviewScanWorkspaceMessage {
+    type = WebviewMessageType.SCAN_WORKSPACE;
+}
+
+export class WebviewOpenFileMessage {
+    type = WebviewMessageType.OPEN_FILE;
+    data: string;
 }
 
 // Type of post message funtion

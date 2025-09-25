@@ -39,10 +39,13 @@ const extensionConfig = {
 const webviewConfig = {
   target: "web",
 
-  entry: "./src/webview/index.ts",
+  entry: {
+    audioPreview: "./src/webview/index.ts",
+    activeLearning: "./src/webview/activeLearning.ts",
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "audioPreview.js",
+    filename: "[name].js",
   },
   devtool: "source-map",
   resolve: {
