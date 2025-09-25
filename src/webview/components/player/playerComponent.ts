@@ -165,6 +165,9 @@ export default class PlayerComponent extends Component {
         if (e.isComposing || e.code !== "Space") {
           return;
         }
+        if (e.target instanceof HTMLTextAreaElement) {
+          return;
+        }
         e.preventDefault();
         this._playButton.click();
       });

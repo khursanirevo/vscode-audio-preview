@@ -132,7 +132,8 @@ class MockGainNode extends MockAudioNode {
 
 class MockBiquadFilterNode extends MockAudioNode {
   frequency: MockAudioParam;
-  Q: MockAudioParam; // eslint-disable-line
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  Q: MockAudioParam;
 
   constructor() {
     super();
@@ -215,6 +216,7 @@ export const mockWebAudioApi = () => {
         return {
           connect: jest.fn(),
           type: "",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           Q: { value: 1 },
           frequency: { value: 440 },
         };
