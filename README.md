@@ -42,6 +42,33 @@ If it finds one, it will display the content in the label section.
 You can edit the label and save it by clicking the "Save Label" button.
 If the `.txt` file does not exist, a new one will be created when you save the label.
 
+## Active Learning
+
+This extension supports active learning to help you prioritize your labeling efforts. By comparing the transcriptions from your ASR models with your ground-truth labels, you can identify the audio files with the highest error rates and focus on correcting them first.
+
+### File Naming Convention
+
+To use the active learning feature, you need to follow a specific file naming convention:
+
+-   **Audio File:** `my_audio_file.wav`
+-   **Reference (Ground Truth):** `my_audio_file.txt`
+-   **Hypothesis (ASR Output):** `my_audio_file.[model_name].txt`
+
+For example, if you have an audio file named `meeting.wav` and you've transcribed it with two models, "whisper" and "gemini", you would have the following files:
+
+-   `meeting.wav`
+-   `meeting.txt` (your corrected transcription)
+-   `meeting.whisper.txt` (the transcription from the whisper model)
+-   `meeting.gemini.txt` (the transcription from the gemini model)
+
+### Usage
+
+1.  Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+2.  Run the **Audio Labeller: Active Learning** command.
+3.  A new view will open with a **Scan Workspace** button. Click it to scan your workspace for audio files and their corresponding reference and hypothesis files.
+4.  Once the scan is complete, you can use the dropdown menus to select a model and a metric (WER or CER). The view will display a list of the audio files, sorted by the selected metric in descending order.
+5.  Click on a file in the list to open it in the audio labeller.
+
 If this extension does not open by default, edit `settings.json` like below.
 
 ```jsonc

@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.8.0 - 2025-09-25
+
+### Added
+
+- Add Active Learning feature to prioritize labeling efforts by sorting files by WER/CER.
+
 ## 2.7.1 - 2025-09-25
 
 ### Reverted
