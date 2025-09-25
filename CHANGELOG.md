@@ -1,5 +1,16 @@
 # Change Log
 
+## 2.7.1 - 2025-09-25
+
+### Reverted
+
+- Revert "Attempt to fix slow playback audio distortion"
+
+### Added
+
+- Add `build_and_install.sh` script
+- Add `TODO.md` and `MEMORY.md`
+
 ## 2.7.0 - 2025-09-25
 
 ### Added

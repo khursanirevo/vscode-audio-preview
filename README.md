@@ -92,32 +92,37 @@ VSCode's DevTools can be opened in the following ways.
 - Press shift + ctrl + I
 - Select Help > Toggle Developer Tools from the menu at the top of the screen
 
-### Build
+## Build and Install
 
 - Clone this repo
 - Install Dependencies: `npm install`
 - Build Container for decoder: `docker build -t audio-decoder ./src/decoder/`
 - Compile decoder.cpp to wasm: `docker run --rm -v ${pwd}/src/decoder:/build -it audio-decoder make`
+- Run the build and install script: `./build_and_install.sh`
 - Run Extension: f5
 
 ### Test
 
-`npm run test`  
+`npm run test`
 This command runs the tests in `src` directory.
 
 ### Lint, Format
 
-Linter  
+Linter
 `npm run lint`
 
-Formatter  
-`npm run format`  
+Formatter
+`npm run format`
 This is automatically applied upon saving due to the settings in the .vscode/settings.json of this project, so there is generally no need to run it manually.
+
+## Other Documents
+
+- [TODO.md](./TODO.md)
+- [MEMORY.md](./MEMORY.md)
 
 ## Acknowledgements
 
 This extension is a fork of [audio-preview](https://github.com/sukumo28/vscode-audio-preview) by sukumo28.
-
 ### References
 
 Custom Editor: https://code.visualstudio.com/api/extension-guides/custom-editors  
