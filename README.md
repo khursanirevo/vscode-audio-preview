@@ -37,7 +37,8 @@ How to preview audio.
 
 You can add labels to your audio files.
 The label is a text file with the same name as the audio file, but with a `.txt` extension.
-When you open an audio file, the extension will automatically look for a corresponding `.txt` file in the same directory.
+When you open an audio file, the extension will automatically look for a corresponding `.txt` file in a sibling `text` directory.
+For example, if the audio file is located at `.../audio/file.wav`, the extension will look for `.../text/file.txt`.
 If it finds one, it will display the content in the label section.
 You can edit the label and save it by clicking the "Save Label" button.
 If the `.txt` file does not exist, a new one will be created when you save the label.
@@ -50,16 +51,16 @@ This extension supports active learning to help you prioritize your labeling eff
 
 To use the active learning feature, you need to follow a specific file naming convention:
 
--   **Audio File:** `my_audio_file.wav`
--   **Reference (Ground Truth):** `my_audio_file.txt`
--   **Hypothesis (ASR Output):** `my_audio_file.[model_name].txt`
+-   **Audio File:** `.../parent/my_audio_file.wav`
+-   **Reference (Ground Truth):** `.../text/my_audio_file.txt`
+-   **Hypothesis (ASR Output):** `.../text/my_audio_file.[model_name].txt`
 
-For example, if you have an audio file named `meeting.wav` and you've transcribed it with two models, "whisper" and "gemini", you would have the following files:
+For example, if you have an audio file named `meeting.wav` in an `audio` folder and you've transcribed it with two models, "whisper" and "gemini", you would have the following files:
 
--   `meeting.wav`
--   `meeting.txt` (your corrected transcription)
--   `meeting.whisper.txt` (the transcription from the whisper model)
--   `meeting.gemini.txt` (the transcription from the gemini model)
+-   `path/to/audio/meeting.wav`
+-   `path/to/text/meeting.txt` (your corrected transcription)
+-   `path/to/text/meeting.whisper.txt` (the transcription from the whisper model)
+-   `path/to/text/meeting.gemini.txt` (the transcription from the gemini model)
 
 ### Usage
 

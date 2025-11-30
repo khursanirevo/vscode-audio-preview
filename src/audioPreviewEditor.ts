@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { Disposable, disposeAll } from "./dispose";
 import { getNonce } from "./util";
 import { AnalyzeDefault, PlayerDefault } from "./config";
@@ -6,11 +7,16 @@ import {
   ExtMessage,
   ExtMessageType,
   WebviewMessage,
-  WebviewMessageType,
-} from "./message";
-
-class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
-  static async create(
+        WebviewMessageType,
+      } from "./message";
+      
+      function getLabelPath(audioPath: string): string {
+        const parentDir = path.dirname(path.dirname(audioPath));
+        const filename = path.basename(audioPath, path.extname(audioPath));
+        return path.join(parentDir, "text", filename + ".txt");
+      }
+      
+      class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {  static async create(
     uri: vscode.Uri,
     backupId: string | undefined,
   ): Promise<AudioPreviewDocument | PromiseLike<AudioPreviewDocument>> {
@@ -26,7 +32,7 @@ class AudioPreviewDocument extends Disposable implements vscode.CustomDocument {
     if (uri.scheme === "untitled") {
       return "";
     }
-    const labelUri = vscode.Uri.file(uri.fsPath.replace(/\.[^/.]+$/, ".txt"));
+    const labelUri = vscode.Uri.file(getLabelPath(uri.fsPath));
     try {
       const labelData = await vscode.workspace.fs.readFile(labelUri);
       return labelData.toString();
@@ -275,10 +281,11 @@ export class AudioPreviewEditorProvider
 
       case WebviewMessageType.SAVE_LABEL:
         if (WebviewMessageType.isSaveLabel(msg)) {
-          const labelUri = vscode.Uri.file(
-            document.uri.fsPath.replace(/\.[^/.]+$/, ".txt"),
-          );
+          const labelUri = vscode.Uri.file(getLabelPath(document.uri.fsPath));
           const content = new TextEncoder().encode(msg.data);
+          await vscode.workspace.fs.createDirectory(
+            vscode.Uri.file(path.dirname(labelUri.fsPath)),
+          );
           await vscode.workspace.fs.writeFile(labelUri, content);
           vscode.window.showInformationMessage(
             `Success! Label file written to: ${labelUri.fsPath}`,
@@ -286,13 +293,14 @@ export class AudioPreviewEditorProvider
         }
         break;
 
-      case WebviewMessageType.SCAN_WORKSPACE:
+      case WebviewMessageType.SCAN_WORKSPACE: {
         const files = await this.scanWorkspace();
         this.postMessage(webviewPanel.webview, {
           type: ExtMessageType.SCAN_WORKSPACE_RESULT,
           data: files,
         });
         break;
+      }
 
       case WebviewMessageType.OPEN_FILE:
         if (WebviewMessageType.isOpen(msg)) {
@@ -303,32 +311,51 @@ export class AudioPreviewEditorProvider
     }
   }
 
-  private async scanWorkspace(): Promise<{ [key: string]: { audio: string, reference: string, hypotheses: { [model: string]: string } } }> {
+  private async scanWorkspace(): Promise<{
+    [key: string]: {
+      audio: string;
+      reference: string;
+      hypotheses: { [model: string]: string };
+    };
+  }> {
     const audioFiles = await vscode.workspace.findFiles("**/*.{wav,mp3}");
-    const results: { [key: string]: { audio: string, reference: string, hypotheses: { [model: string]: string } } } = {};
+    const results: {
+      [key: string]: {
+        audio: string;
+        reference: string;
+        hypotheses: { [model: string]: string };
+      };
+    } = {};
 
     for (const audioFile of audioFiles) {
       const audioPath = audioFile.fsPath;
-      const referencePath = audioPath.replace(/\.[^/.]+$/, ".txt");
+      const referencePath = getLabelPath(audioPath);
       const referenceUri = vscode.Uri.file(referencePath);
 
       try {
-        const referenceContent = await vscode.workspace.fs.readFile(referenceUri);
+        const referenceContent =
+          await vscode.workspace.fs.readFile(referenceUri);
         const hypotheses: { [model: string]: string } = {};
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(audioFile);
-        if (workspaceFolder) {
-          const pattern = new vscode.RelativePattern(workspaceFolder, `${vscode.workspace.asRelativePath(audioFile).replace(/\.[^/.]+$/, ".*.txt")}`);
-          const hypothesisFiles = await vscode.workspace.findFiles(pattern);
 
-          for (const hypothesisFile of hypothesisFiles) {
-            const modelMatch = hypothesisFile.fsPath.match(/\.([^/.]+)\.txt$/);
-            if (modelMatch) {
-              const model = modelMatch[1];
-              const hypothesisContent = await vscode.workspace.fs.readFile(hypothesisFile);
-              hypotheses[model] = hypothesisContent.toString();
-            }
+        const textDir = path.dirname(referencePath);
+        const baseName = path.basename(audioPath, path.extname(audioPath));
+        const pattern = new vscode.RelativePattern(
+          vscode.Uri.file(textDir),
+          `${baseName}.*.txt`,
+        );
+
+        const hypothesisFiles = await vscode.workspace.findFiles(pattern);
+
+        for (const hypothesisFile of hypothesisFiles) {
+          const modelMatch = hypothesisFile.fsPath.match(/\.([^/.]+)\.txt$/);
+          if (modelMatch) {
+            const model = modelMatch[1];
+            const hypothesisContent =
+              await vscode.workspace.fs.readFile(hypothesisFile);
+            hypotheses[model] = hypothesisContent.toString();
           }
         }
+
         results[audioPath] = {
           audio: audioPath,
           reference: referenceContent.toString(),
